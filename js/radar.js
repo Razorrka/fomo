@@ -306,6 +306,17 @@
     tokens,
     EXPLORER, CHAIN_EMOJI, DS2GT,
     get: (k) => tokens.get(k),
+    // the scanner hands new coins to the radar so they get priced, rug-checked and scored like everything else
+    track(chain, addr, seed, tag) {
+      const t = ensure(chain, addr);
+      if (t.sym === '?' && seed.sym) t.sym = seed.sym;
+      if (!t.name && seed.name) t.name = seed.name;
+      if (!t.icon && seed.icon) t.icon = seed.icon;
+      if (!t.gtNet && seed.gtNet) t.gtNet = seed.gtNet;
+      if (!t.gtPool && seed.gtPool) t.gtPool = seed.gtPool;
+      t.src.add(tag);
+      return t.key;
+    },
     list: () => [...tokens.values()].filter((t) => t.price != null),
     topSyms(n) {
       return this.list().filter((t) => t.risk < 60 && /^[A-Za-z0-9]{3,10}$/.test(t.sym)).sort((a, b) => b.fomo - a.fomo).slice(0, n).map((t) => t.sym.toUpperCase());

@@ -23,6 +23,7 @@
     feargreed: ['alternative.me', 'Crypto Fear & Greed index'],
     coingecko: ['CoinGecko', 'Total market cap, BTC dominance'],
     safety: ['RugCheck · GoPlus', 'Contract & holder checks behind every call'],
+    scanner: ['Scanner', 'Binance/OKX announcements, new Coinbase & Hyperliquid markets, new pools'],
   };
   function renderHealth() {
     const h = F.health.all();
@@ -190,6 +191,7 @@
       clearTimeout(boot.h);
       boot.h = setTimeout(renderHealth, 300);
     });
+    F.on('scan:alert', (it) => F.toast(`🚨 ${it.ex}: ${it.title}`, 'good'));
     F.on('bot:trade', (x) => {
       if (x.side === 'buy') F.toast(`🚀 Bot bought ${x.sym}`, 'good');
       else F.toast(`Bot sold ${x.sym} · ${x.pnl >= 0 ? '+' : '−'}${F.usd(Math.abs(x.pnl))}`, x.pnl >= 0 ? 'good' : 'bad');
@@ -200,6 +202,7 @@
     F.social.start();
     F.engine.start();
     F.radar.start();
+    F.scanner.start();
     F.bot.start();
     F.ai.start();
     renderHealth();

@@ -44,7 +44,14 @@
   // MarketWatch's own feed allows direct reads (CORS *), so it skips the converter.
   const DIRECT_RSS = [{ url: 'https://feeds.content.dowjones.io/public/rss/mw_topstories', name: 'MarketWatch', h: 'marketwatch.com', kind: 'stocks' }];
 
-  const BASE_QUERIES = ['memecoin', 'pump.fun', '$SOL', '$BTC', 'solana', 'altcoin', '$ETH', 'crypto'];
+  const BASE_QUERIES = ['memecoin', 'pump.fun', '$SOL', 'will list', '$BTC', 'solana', 'airdrop', 'altcoin', 'token launch', '$ETH', 'listing', 'crypto'];
+  // announcement detection for the scanner: exchange listings, delistings, launches / TGEs, airdrops, contract drops
+  const EXCH_ANN = '(coinbase|binance|robinhood|kraken|okx|bybit|upbit|bithumb|hyperliquid|revolut|bitget|kucoin|gemini|crypto\\.com)';
+  const LISTING_RE = new RegExp(`\\b(will list|to list|lists|listing|listed|adds?|launch(es)? trading|now (live|available|trading) on)\\b[^.\\n]{0,50}\\b${EXCH_ANN}\\b|\\b${EXCH_ANN}\\b[^.\\n]{0,50}\\b(will list|to list|lists|listing|adds?|launch(es)? trading)\\b`, 'i');
+  const DELIST_RE = /\bdelist(s|ed|ing)?\b/i;
+  const LAUNCH_RE = /\b(token launch|launch(es|ed|ing)? (its |a |the |their )?(token|coin|mainnet)|mainnet (is )?(live|launch)|tge|token generation event|stealth launch|fair launch|presale|now live on (pump\.fun|raydium|jupiter|meteora))\b/i;
+  const AIRDROP_RE = /\bairdrop(s|ped)?\b|\bclaim (is )?(now )?(live|open)\b/i;
+  const CA_RE = /\b[1-9A-HJ-NP-Za-km-z]{32,44}\b|\b0x[a-fA-F0-9]{40}\b/;
   const MASTO_TAGS = ['memecoin', 'crypto', 'bitcoin', 'solana', 'cryptocurrency'];
   const SPAM_LABELS = new Set(['spam', 'porn', 'sexual', 'nudity', 'graphic-media', '!hide', '!warn', 'impersonation', 'scam']);
   const EXCH = /#?(binance|coinbase|kraken|okx|okex|bybit|bitfinex|bitstamp|gemini|kucoin|htx|huobi|gate\.?io|bitget|mexc|upbit|crypto\.com|robinhood|bithumb|deribit|hyperliquid)\b/i;
@@ -70,6 +77,7 @@
     else p.kind = 'chatter';
     p.sent = F.sentiment(t);
     if (p.kind === 'whale') whale(p);
+    p.announce = p.kind === 'whale' ? null : DELIST_RE.test(t) ? 'delisting' : LISTING_RE.test(t) ? 'listing' : AIRDROP_RE.test(t) ? 'airdrop' : LAUNCH_RE.test(t) ? 'launch' : !p.outlet && CA_RE.test(t) ? 'ca' : null;
     return p;
   }
 

@@ -134,8 +134,26 @@
     t.innerHTML = html.trim();
     return t.content.firstElementChild;
   };
-  function renderFeed(reset) {
+  function renderScan() {
     const list = F.$('#feedList');
+    const html = F.scanner.html();
+    if (list._scan !== html) {
+      list.innerHTML = html;
+      list._scan = html;
+    }
+    F.scanner.markViewed();
+    paintScanBadge();
+  }
+  function paintScanBadge() {
+    const n = feedFilter === 'scan' ? 0 : F.scanner.unseen();
+    const b = F.$('#scanBadge');
+    b.hidden = !n;
+    b.textContent = n > 9 ? '9+' : n;
+  }
+  function renderFeed(reset) {
+    if (feedFilter === 'scan') return renderScan();
+    const list = F.$('#feedList');
+    list._scan = null;
     if (reset) {
       list.innerHTML = '';
       feedEls.clear();
@@ -643,11 +661,13 @@
         clearTimeout(fd);
         fd = setTimeout(renderFeed, 250);
       });
+      F.on('scan', () => (feedFilter === 'scan' ? renderScan() : paintScanBadge()));
       F.on('radar', () => {
         clearTimeout(rd);
         rd = setTimeout(() => {
           renderRadar();
           renderCalls();
+          if (feedFilter === 'scan') renderScan();
           if (drawerKey) refreshDrawer();
         }, 200);
       });
