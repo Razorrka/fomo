@@ -22,6 +22,7 @@
     rss: ['Newsroom RSS', 'CoinDesk, The Block, Cointelegraph'],
     feargreed: ['alternative.me', 'Crypto Fear & Greed index'],
     coingecko: ['CoinGecko', 'Total market cap, BTC dominance'],
+    safety: ['RugCheck · GoPlus', 'Contract & holder checks behind every call'],
   };
   function renderHealth() {
     const h = F.health.all();
@@ -123,6 +124,51 @@
     };
   }
 
+  /* ---------- themes + text size ---------- */
+  const THEMES = [
+    ['midnight', 'Midnight', ['#0b0b10', '#121218', '#3fdd84']],
+    ['halloween', 'Halloween', ['#0d0905', '#ff7a1a', '#7fe05a']],
+    ['hacker', 'Hacker', ['#000000', '#39ff6a', '#0a140a']],
+    ['peach', 'Peachy pink', ['#fff1ec', '#ff6f91', '#3a1f1a']],
+    ['pear', 'Juicy pear', ['#f4f8e3', '#8ab619', '#263010']],
+    ['vanilla', 'Vanilla & rosewood', ['#fbf6ea', '#9e4a52', '#3d1f1f']],
+    ['coffee', 'Creamy coffee', ['#efe4d6', '#8b5a2b', '#2e1d12']],
+  ];
+  function applyTheme(id) {
+    const t = THEMES.find((x) => x[0] === id) || THEMES[0];
+    document.documentElement.dataset.theme = t[0];
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.content = t[2][0];
+    F.store.set('theme', t[0]);
+    F.$$('#themeList button').forEach((b) => b.classList.toggle('on', b.dataset.t === t[0]));
+  }
+  function applyFz(v) {
+    document.documentElement.style.setProperty('--fz', v);
+    F.store.set('fz', v);
+    F.$$('#fzSeg button').forEach((b) => b.classList.toggle('on', +b.dataset.fz === +v));
+  }
+  function bindThemes() {
+    F.$('#themeList').innerHTML = THEMES.map(([id, name, sw]) => `<button data-t="${id}" type="button"><i style="background:${sw[0]}"></i><i style="background:${sw[1]}"></i><i style="background:${sw[2]}"></i><span>${name}</span></button>`).join('');
+    applyTheme(F.store.get('theme', 'midnight'));
+    applyFz(F.store.get('fz', 1));
+    const pop = F.$('#themePop');
+    F.$('#themeBtn').onclick = (e) => {
+      e.stopPropagation();
+      pop.hidden = !pop.hidden;
+    };
+    F.$('#themeList').onclick = (e) => {
+      const b = e.target.closest('button[data-t]');
+      if (b) applyTheme(b.dataset.t);
+    };
+    F.$('#fzSeg').onclick = (e) => {
+      const b = e.target.closest('button[data-fz]');
+      if (b) applyFz(+b.dataset.fz);
+    };
+    document.addEventListener('click', (e) => {
+      if (!pop.hidden && !pop.contains(e.target) && e.target.id !== 'themeBtn') pop.hidden = true;
+    });
+  }
+
   /* ---------- columns on smaller screens ---------- */
   function showCol(id) {
     F.$$('.col').forEach((c) => c.classList.toggle('show', c.id === id));
@@ -131,6 +177,7 @@
   }
 
   function boot() {
+    bindThemes();
     bindModals();
     bindBrief();
     F.$('#tabs').addEventListener('click', (e) => {
@@ -151,6 +198,7 @@
     F.panels.start();
     F.markets.start();
     F.social.start();
+    F.engine.start();
     F.radar.start();
     F.bot.start();
     F.ai.start();

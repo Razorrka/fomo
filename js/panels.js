@@ -215,17 +215,17 @@
     return [
       `<b>${F.esc(t.sym)} ${t.created ? `<em${isNew(t) ? '' : ' class="dim"'}>${age(t)}</em>` : ''}${held ? '<span class="held-t">Holding</span>' : ''}</b><small><span class="pxs">$${F.price(t.price)} · </span>${F.usd(t.vol.h24)} Vol · ${F.esc(t.chain)}${promoted(t) ? ' · <span class="promo">Promoted</span>' : ''}</small>`,
       `$${F.price(t.price)}`,
+      F.usd(t.mcap || t.fdv),
       F.chg(t.ch.m5, 1),
       F.chg(t.ch.h1, 1),
-      F.chg(t.ch.h24, 0),
       F.usd(t.liq),
-      F.usd(t.mcap || t.fdv),
       `${flowBar(h1.b, h1.s)}<small>${bp == null ? '—' : bp + '% buys'}</small>`,
       scoreTag(t),
       riskTxt(t.risk),
+      verdictTag(t.sig),
     ];
   }
-  const CELL_CLS = ['tok', 'num px', '', '', '', 'num', 'num', 'flow', '', ''];
+  const CELL_CLS = ['tok', 'num px', 'num', '', '', 'num', 'flow', '', '', ''];
   const rowEls = new Map();
   function flash(el, dir) {
     el.classList.remove('fl-up', 'fl-dn');
@@ -237,13 +237,14 @@
     const all = F.radar.list();
     let rows = hideRisky ? all.filter((t) => t.risk < 60 || held.has(t.key)) : all.slice();
     const hidden = all.length - rows.length;
-    const key = { fomo: (t) => t.fomo, h1: (t) => t.ch.h1 || 0, m5: (t) => t.ch.m5 || 0, vol: (t) => t.vol.h1 || 0, new: (t) => t.created || 0, risk: (t) => t.risk }[sortBy];
+    const vrank = (t) => (t.sig ? { buy: 2, wait: 1, skip: 0 }[t.sig.label] * 1000 + t.sig.p * 100 : 0);
+    const key = { fomo: (t) => vrank(t) + t.fomo / 100, h1: (t) => t.ch.h1 || 0, m5: (t) => t.ch.m5 || 0, vol: (t) => t.vol.h1 || 0, new: (t) => t.created || 0, risk: (t) => t.risk }[sortBy];
     rows.sort((a, b) => key(b) - key(a) || a.key.localeCompare(b.key));
     rows = rows.slice(0, 60);
     const list = F.$('#radarList');
     let head = list.querySelector('.rh');
     if (!head) {
-      list.innerHTML = '<div class="rr rh"><span>Token</span><span>Price</span><span>5m</span><span>1h</span><span>24h</span><span>Liquidity</span><span>MC</span><span>Buys / sells</span><span>FOMO</span><span>Risk</span></div>';
+      list.innerHTML = '<div class="rr rh"><span>Token</span><span>Price</span><span>MC</span><span>5m</span><span>1h</span><span>Liquidity</span><span>Buys / sells</span><span>FOMO</span><span>Risk</span><span>Verdict</span></div>';
       head = list.firstElementChild;
     }
     const empty = list.querySelector('.empty');
@@ -341,7 +342,7 @@
     tickTimers[id] = setTimeout(() => {
       tickTimers[id] = null;
       paintSym(kind, sym);
-    }, 400);
+    }, 1000);
   }
 
   function renderMarkets() {
@@ -358,36 +359,98 @@
     }
   }
 
+  /* ================= LIVE CALLS ================= */
+  const FACTOR_LABEL = { mom: 'Momentum', accel: 'Volume pace', flow: 'Buy pressure', traders: 'Unique wallets', tape: 'Live tape', trend: 'Candle trend', heat: 'Heat (RSI)', depth: 'Liquidity', safety: 'Safety', buzz: 'Social buzz', exhaust: 'Exhaustion' };
+  const VERDICT = { buy: 'Worth buying', wait: 'Wait', skip: 'Not worth it' };
+  const verdictTag = (s) => (s ? `<span class="vd ${s.label}" title="${F.esc(s.reason || '')}">${VERDICT[s.label]}</span>` : '<span class="vd wait">…</span>');
+  const pctOf = (x) => `${x >= 0 ? '+' : '−'}${Math.abs(x * 100).toFixed(x * 100 >= 10 || x * 100 <= -10 ? 0 : 1)}%`;
+  function ladderHTML(s, price) {
+    return `<div class="ladder">
+      <div class="lv stop"><span>Stop</span><b>$${F.price(s.stop)}</b><em>${pctOf(-s.stopPct)}</em></div>
+      <div class="lv entry"><span>Now</span><b>$${F.price(price)}</b><em>buy under $${F.price(s.maxEntry)}</em></div>
+      <div class="lv tp"><span>Target</span><b>$${F.price(s.tp1)}</b><em>${pctOf(s.tp1Pct)} · sell half</em></div>
+      <div class="lv tp2"><span>Runner</span><b>$${F.price(s.tp2)}</b><em>${pctOf(s.tp2Pct)} · trail the rest</em></div>
+    </div>`;
+  }
+  const aiTakes = {};
+  let aiBusy = false, aiLast = 0;
+  function callCard(t, rank) {
+    const s = t.sig;
+    if (rank > 0)
+      return `<div class="call mini" data-key="${F.esc(t.key)}">${ico(t)}<div class="nm"><b>${F.esc(t.sym)}</b><small>${F.esc(t.chain)} · ${F.usd(t.mcap || t.fdv)} MC</small></div><div class="mn"><b>${Math.round(s.p * 100)}%</b><small>odds</small></div><div class="mn"><b class="${F.dir(s.ev)}">${pctOf(s.ev)}</b><small>EV</small></div><div class="mn"><b>$${F.price(s.stop)}</b><small>stop</small></div><div class="mn"><b>$${F.price(s.tp1)}</b><small>target</small></div>${verdictTag(s)}</div>`;
+    const size = F.bot.tradeSize(t), fee = F.bot.feePct() / 100;
+    const lose = size * (s.stopPct + 2 * fee + s.slip);
+    const take = aiTakes[t.key];
+    return `<div class="call" data-key="${F.esc(t.key)}">
+      <div class="call-h">${ico(t)}<div class="nm"><b>${F.esc(t.sym)}</b><small>${F.esc(t.chain)} · ${t.created ? age(t) + ' old · ' : ''}${F.usd(t.mcap || t.fdv)} MC · ${F.usd(t.liq)} liquidity</small></div>${rank === 0 ? '<span class="vd buy big">Worth buying 🚀</span>' : verdictTag(s)}</div>
+      <div class="call-nums">
+        <div><span>Odds</span><b>${Math.round(s.p * 100)}%</b><small>target before stop</small></div>
+        <div><span>Expected value</span><b class="${F.dir(s.ev)}">${pctOf(s.ev)}</b><small>per trade, after fees</small></div>
+        <div><span>When</span><b>Now</b><small>skip it above $${F.price(s.maxEntry)}</small></div>
+      </div>
+      ${ladderHTML(s, t.price)}
+      <p class="size">With your bot settings: <b>${F.usd(size)}</b> in → ${F.usd(size * (1 - fee))} into the coin after the ${F.bot.feePct()}% fee. If the stop hits you lose about <b>${F.usd(lose)}</b>.</p>
+      <ul class="why">${s.why.map((x) => `<li class="pro">${F.esc(x.txt)}</li>`).join('')}${s.against.map((x) => `<li class="con">${F.esc(x.txt)}</li>`).join('')}</ul>
+      ${take ? `<p class="take ${take.verdict === 'buy' ? 'agree' : 'disagree'}">🧠 Claude ${take.verdict === 'buy' ? 'agrees' : 'disagrees'} (conviction ${take.conviction}): ${F.esc(take.thesis)}${take.red_flags && take.red_flags.length ? ' · Red flags: ' + F.esc(take.red_flags.join('; ')) : ''}</p>` : ''}
+    </div>`;
+  }
+  function trackHTML() {
+    const st = F.engine.stats();
+    const recent = F.engine.calls().slice(0, 8);
+    const chip = (c) => {
+      if (c.status === 'open') {
+        const t = F.radar.get(c.key);
+        const r = t && t.price ? t.price / c.entry - 1 : 0;
+        return `<span class="cc open" title="open ${F.ago(c.at)}">${F.esc(c.sym)} <em class="${F.dir(r)}">${pctOf(r)}</em> live</span>`;
+      }
+      const ok = c.status === 'win' || (c.status === 'timeout' && c.net > 0);
+      return `<span class="cc ${ok ? 'win' : 'loss'}" title="${c.status} · ${F.ago(c.closedAt)} ago">${ok ? '✓' : '✗'} ${F.esc(c.sym)} <em>${pctOf(c.net)}</em></span>`;
+    };
+    const head = st.n
+      ? `<b>${st.n}</b> graded calls in 7 days · <b>${Math.round(st.hit * 100)}%</b> hit · <b class="${F.dir(st.avgNet)}">${pctOf(st.avgNet)}</b> average per call after fees${st.open ? ` · ${st.open} open` : ''}`
+      : `No graded calls yet${st.open ? ` · ${st.open} open now` : ''}. Every “Worth buying” call is logged and graded against the live price (target, stop, or 2-hour timeout), wins and losses alike.`;
+    const cal = st.n ? `<div class="cal">${st.buckets.map(([l, b]) => `<span>${l} odds: ${b.n ? `${Math.round(b.hit * 100)}% hit of ${b.n}` : '—'}</span>`).join('')}<span>model learned from ${st.learned} result${st.learned === 1 ? '' : 's'}</span></div>` : '';
+    return `<p class="track-h">Track record: ${head}</p>${cal}${recent.length ? `<div class="chips2">${recent.map(chip).join('')}</div>` : ''}`;
+  }
+  function renderCalls() {
+    const best = F.engine.best(3);
+    let html;
+    if (best.length) html = best.map(callCard).join('');
+    else {
+      const near = F.radar.list().filter((t) => t.sig && t.sig.label === 'wait').sort((a, b) => b.sig.p - a.sig.p).slice(0, 3);
+      html = `<div class="nocall"><b>Nothing worth buying right now.</b> The engine only calls a buy when the odds and the expected value after fees are both on your side.${near.length ? `<ul>${near.map((t) => `<li data-key="${F.esc(t.key)}"><span class="score s2">${Math.round(t.sig.p * 100)}%</span><b>${F.esc(t.sym)}</b><span class="mut">${F.esc(t.sig.reason)}</span></li>`).join('')}</ul>` : ''}</div>`;
+    }
+    const body = F.$('#callsBody');
+    if (body._h !== html) {
+      body.innerHTML = html;
+      body._h = html;
+    }
+    const tr = trackHTML();
+    const track = F.$('#callsTrack');
+    if (track._h !== tr) {
+      track.innerHTML = tr;
+      track._h = tr;
+    }
+    const n = F.radar.list().filter((t) => t.sig && t.sig.label === 'buy').length;
+    F.$('#callsMeta').innerHTML = `${n} worth buying · ${F.radar.list().filter((t) => t.sig && t.sig.label === 'skip').length} not worth it`;
+    // Claude's second opinion on the top call (one at a time, at most every 2 minutes)
+    const top = best[0];
+    if (top && F.ai && F.ai.ready() && !aiTakes[top.key] && !aiBusy && Date.now() - aiLast > 120000) {
+      aiBusy = true;
+      aiLast = Date.now();
+      F.ai.copilot(top, F.social.mentions(top.sym.toUpperCase(), 6 * 3600000).slice(0, 10), F.bot.PRESETS.degen)
+        .then((v) => (aiTakes[top.key] = v))
+        .catch(() => {})
+        .finally(() => {
+          aiBusy = false;
+          renderCalls();
+        });
+    }
+  }
+
   /* ================= TOKEN DRAWER ================= */
   let drawerKey = null;
 
-  // Real 5-minute candles from GeckoTerminal for the same (deepest) pool DexScreener prices.
-  const candles = {};
-  const poolOf = (t) => {
-    const net = t.gtNet || F.radar.DS2GT[t.chain];
-    const pool = t.pair || t.gtPool;
-    return net && pool ? { net, pool, k: net + ':' + pool } : null;
-  };
-  async function loadCandles(t) {
-    const p = poolOf(t);
-    if (!p) return null;
-    const c = candles[p.k];
-    if (c && Date.now() - c.at < 60000) {
-      if (c.failed) throw new Error('chart unavailable');
-      return c.rows;
-    }
-    let d;
-    try {
-      d = await F.gtFetch(`https://api.geckoterminal.com/api/v2/networks/${p.net}/pools/${p.pool}/ohlcv/minute?aggregate=5&limit=72&currency=usd&token=${t.addr}`);
-    } catch (e) {
-      candles[p.k] = { at: Date.now(), rows: c ? c.rows : null, failed: !c };
-      if (c && c.rows) return c.rows;
-      throw e;
-    }
-    const rows = (d.data.attributes.ohlcv_list || []).slice().reverse();
-    candles[p.k] = { at: Date.now(), rows };
-    return rows;
-  }
   function candleSVG(rows) {
     if (!rows || rows.length < 2) return '<p class="empty">Not enough trading history for a chart yet.</p>';
     const w = 520, h = 150, vh = 28, ph = h - vh - 6;
@@ -410,12 +473,30 @@
       <div class="cax"><span>H $${F.price(hi)} · L $${F.price(lo)}</span><span>${F.ago(rows[0][0] * 1000)} ago → now ${F.chg((last / first - 1) * 100)}</span></div>`;
   }
   const chartHTML = (t) => {
-    const p = poolOf(t);
-    const c = p && candles[p.k];
-    if (c && c.rows) return candleSVG(c.rows);
-    if (c && c.failed) return F.spark(t.hist.map((x) => x[1]), 500, 120, 'wide');
-    return p ? '<p class="empty">Loading chart…</p>' : F.spark(t.hist.map((x) => x[1]), 500, 120, 'wide');
+    const rows = F.candles.get(t);
+    if (rows) return candleSVG(rows);
+    return F.candles.hasPool(t) ? '<p class="empty">Loading chart…</p>' : F.spark(t.hist.map((x) => x[1]), 500, 120, 'wide');
   };
+  function drawerCallHTML(t) {
+    const s = t.sig;
+    if (!s) return '';
+    const bars = F.engine.FACTORS.map((k) => {
+      const v = (s.f[k] || 0);
+      return `<div class="fb"><span>${FACTOR_LABEL[k]}</span><i class="fbar"><i class="${v >= 0 ? 'pos' : 'neg'}" style="${v >= 0 ? 'left:50%' : `left:${50 + v * 50}%`};width:${Math.abs(v) * 50}%"></i></i><em class="${F.dir(v)}">${v >= 0 ? '+' : ''}${v.toFixed(2)}</em></div>`;
+    }).join('');
+    const sf = t.safety;
+    const safe = sf
+      ? `<div class="safe"><b>${F.esc(sf.src)} check</b><span>Top 10 wallets: <b>${sf.top10.toFixed(0)}%</b></span>${sf.holders ? `<span>Holders: <b>${sf.holders.toLocaleString()}</b></span>` : ''}<span>Mint: <b class="${sf.mint ? 'dn' : 'up'}">${sf.mint ? 'ON' : 'off'}</b></span><span>Freeze: <b class="${sf.freeze ? 'dn' : 'up'}">${sf.freeze ? 'ON' : 'off'}</b></span>${sf.src === 'RugCheck' || sf.lpLocked ? `<span>LP locked: <b>${sf.lpLocked.toFixed(0)}%</b></span>` : ''}${sf.insiderPct ? `<span>Insiders: <b>${sf.insiderPct.toFixed(0)}%</b></span>` : ''}${sf.sellTax ? `<span>Sell tax: <b class="dn">${sf.sellTax.toFixed(1)}%</b></span>` : ''}${sf.honeypot ? '<span><b class="dn">HONEYPOT</b></span>' : ''}</div>`
+      : `<div class="safe"><span class="mut">${t.chain === 'solana' || ['ethereum', 'bsc', 'base', 'arbitrum'].includes(t.chain) ? 'Contract and holder check runs when this coin gets close to a call.' : 'No contract scanner covers this chain — be extra careful.'}</span></div>`;
+    return `<div class="dcall ${s.label}">
+      <div class="dcall-h">${verdictTag(s)}<span class="mut">${F.esc(s.reason || (s.label === 'buy' ? 'Odds and expected value both clear the bar.' : ''))}</span></div>
+      <div class="call-nums"><div><span>Odds</span><b>${Math.round(s.p * 100)}%</b><small>target before stop</small></div><div><span>Expected value</span><b class="${F.dir(s.ev)}">${pctOf(s.ev)}</b><small>after fees</small></div><div><span>Volatility</span><b>${s.atr ? (s.atr * 100).toFixed(1) + '%' : '—'}</b><small>per 5-min candle</small></div></div>
+      ${ladderHTML(s, t.price)}
+      <h4>What the model sees</h4><div class="fbars">${bars}</div>
+      ${safe}
+    </div>`;
+  }
+
   function drawerHTML(t) {
     const tx = (w) => t.tx[w] || { b: 0, s: 0 };
     const held = F.bot.state().pos.find((p) => p.key === t.key);
@@ -435,8 +516,9 @@
         <div class="tile"><span>24H vol</span><b>${F.usd(t.vol.h24)}</b></div>
         <div class="tile"><span>Liquidity</span><b>${F.usd(t.liq)}</b></div>
       </div>
+      <div data-live="call">${drawerCallHTML(t)}</div>
       <div class="dr-chart" id="drChart">${chartHTML(t)}</div>
-      <p class="dr-note" data-live="note">${poolOf(t) ? '5-minute candles · GeckoTerminal' : 'Price since fomo radar started watching'} · price via ${F.esc(t.via || '—')}, updated ${F.ago(t.at)} ago</p>
+      <p class="dr-note" data-live="note">${F.candles.hasPool(t) ? '5-minute candles · GeckoTerminal' : 'Price since fomo radar started watching'} · price via ${F.esc(t.via || '—')}, updated ${F.ago(t.at)} ago</p>
       <div class="tf" data-live="tf">${[['5M', 'm5'], ['1H', 'h1'], ['6H', 'h6'], ['24H', 'h24']].map(([l, w]) => `<div><span>${l}</span>${F.chg(t.ch[w])}</div>`).join('')}</div>
       <div data-live="flow">${flow('m5', 'last 5 min')}${flow('h1', 'last hour')}${flow('h24', 'last 24h')}</div>
       <h3>Scores</h3>
@@ -460,7 +542,7 @@
     d.hidden = false;
     requestAnimationFrame(() => d.classList.add('open'));
     F.$('#drClose').onclick = closeDrawer;
-    loadCandles(t)
+    F.candles.load(t)
       .then((rows) => {
         if (drawerKey === key && rows) F.$('#drChart').innerHTML = candleSVG(rows);
       })
@@ -495,11 +577,13 @@
       const n = next.querySelector(`[data-live="${el.dataset.live}"]`);
       if (n && n.innerHTML !== el.innerHTML) el.innerHTML = n.innerHTML;
     });
-    const p = poolOf(t);
-    if (p && (!candles[p.k] || Date.now() - candles[p.k].at > 60000))
-      loadCandles(t)
+    if (F.candles.hasPool(t))
+      F.candles.load(t)
         .then((rows) => {
-          if (drawerKey === t.key && rows) F.$('#drChart').innerHTML = candleSVG(rows);
+          if (drawerKey === t.key && rows) {
+            const html = candleSVG(rows);
+            if (F.$('#drChart')._h !== html) F.$('#drChart').innerHTML = F.$('#drChart')._h = html;
+          }
         })
         .catch(() => {});
   }
@@ -563,6 +647,7 @@
         clearTimeout(rd);
         rd = setTimeout(() => {
           renderRadar();
+          renderCalls();
           if (drawerKey) refreshDrawer();
         }, 200);
       });
@@ -590,7 +675,13 @@
       setInterval(() => F.$$('time[data-ts]').forEach((el) => (el.textContent = F.ago(+el.dataset.ts))), 15000);
       renderFeed();
       renderRadar();
+      renderCalls();
       renderMarkets();
+      F.on('call:new', (c) => {
+        renderCalls();
+        F.toast(`🤖 New call: ${c.sym} is worth buying (${Math.round(c.p * 100)}% odds)`, 'good');
+      });
+      F.on('call:closed', () => renderCalls());
     },
   };
 })();

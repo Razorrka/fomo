@@ -36,6 +36,11 @@
     const last = t.hist[t.hist.length - 1];
     if (!last || Date.now() - last[0] > 15000) t.hist.push([Date.now(), t.price]);
     if (t.hist.length > 120) t.hist.shift();
+    // every refresh also lands in a ~15-minute live tape the signal engine reads (trend + its fit)
+    t.samples = t.samples || [];
+    const ls = t.samples[t.samples.length - 1];
+    if (!ls || Date.now() - ls[0] > 5000) t.samples.push([Date.now(), t.price]);
+    if (t.samples.length > 120) t.samples.shift();
   }
 
   /* ---------------- GeckoTerminal: organic trending ---------------- */
@@ -80,6 +85,9 @@
           if (t.sym === '?') t.sym = ta.symbol;
           if (!t.name) t.name = ta.name;
           if (!t.icon && ta.image_url && !/missing/.test(ta.image_url)) t.icon = ta.image_url;
+          // unique buyer/seller wallet counts only GeckoTerminal provides — the engine uses them to spot bot-driven volume
+          const trx = a.transactions || {};
+          if (trx.h1) t.traders = { at: Date.now(), h1: { buys: trx.h1.buys || 0, sells: trx.h1.sells || 0, buyers: trx.h1.buyers || 0, sellers: trx.h1.sellers || 0 } };
           // Only use GeckoTerminal numbers when DexScreener hasn't priced this token recently.
           if (Date.now() - t.at > 120000) {
             const pc = a.price_change_percentage || {}, vu = a.volume_usd || {}, tr = a.transactions || {};
@@ -276,10 +284,12 @@
     t.fomo = F.clamp(Math.round(fomo), 0, 100);
     t.parts = { mom, accel, bp, buzz: t.buzz, overext };
     t.tier = t.fomo >= 75 ? '🚀' : t.fomo >= 62 ? '🔥' : t.fomo >= 45 ? '👀' : '🧊';
+    if (F.engine) F.engine.enrich(t);
   }
 
   function prune() {
     const held = F.bot ? F.bot.heldKeys() : new Set();
+    if (F.engine) F.engine.trackedKeys().forEach((k) => held.add(k)); // keep tokens with open calls priced until graded
     tokens.forEach((t, k) => {
       if (!held.has(k) && Date.now() - t.lastListed > 45 * 60000) tokens.delete(k);
       else if (t.price == null && Date.now() - t.firstSeen > 10 * 60000 && !held.has(k)) tokens.delete(k);
@@ -311,7 +321,27 @@
       (t.socials || []).slice(0, 2).forEach((s) => out.push([s.type === 'twitter' ? 'X' : s.type || 'Social', s.url]));
       return out;
     },
+    // instant start: paint the last session's radar immediately (marked stale), then the live refresh takes over
+    hydrate() {
+      const snap = F.store.get('radar-snap', []);
+      snap.forEach((x) => {
+        if (tokens.has(x.key)) return;
+        tokens.set(x.key, Object.assign(x, { src: new Set(x.src || []), lastListed: Date.now(), samples: [], hydrated: true }));
+      });
+      if (snap.length) finish();
+    },
+    snapshot() {
+      const keep = [...tokens.values()].filter((t) => t.price != null).sort((a, b) => b.fomo - a.fomo).slice(0, 60);
+      F.store.set('radar-snap', keep.map((t) => {
+        const o = {};
+        ['key', 'chain', 'addr', 'sym', 'name', 'icon', 'price', 'ch', 'vol', 'tx', 'liq', 'liqMax', 'fdv', 'mcap', 'created', 'boost', 'firstSeen', 'at', 'hist', 'pairUrl', 'pair', 'gtPool', 'gtNet', 'dex', 'quote', 'socials', 'websites', 'via', 'traders'].forEach((k) => (o[k] = t[k]));
+        o.src = [...t.src];
+        return o;
+      }));
+    },
     start() {
+      this.hydrate();
+      setInterval(() => this.snapshot(), 30000);
       pollGT();
       pollBoosts();
       setInterval(pollGT, 60000);

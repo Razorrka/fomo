@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="fomo.css?v=20261002a">
+<link rel="stylesheet" href="fomo.css?v=20261002c">
 </head>
 <body>
 
@@ -26,6 +26,7 @@
       <b id="topEq">$1,000.00</b><span id="topEqSub">bot · paper</span>
     </button>
     <button class="stat" id="aiStatus" type="button"></button>
+    <button class="iconbtn" id="themeBtn" type="button" title="Themes &amp; text size"><svg viewBox="0 0 24 24" class="ic"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.6-.9 1.2-1.8l-.4-.9c-.5-1 .2-2.3 1.4-2.3H17a4 4 0 0 0 4-4c0-5-4-9-9-9z"/><circle cx="7.5" cy="10.5" r="1.3"/><circle cx="12" cy="7.5" r="1.3"/><circle cx="16.5" cy="10.5" r="1.3"/></svg></button>
     <button class="iconbtn" id="settingsBtn" type="button" title="Settings"><svg viewBox="0 0 24 24" class="ic"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
   </div>
 </header>
@@ -61,6 +62,12 @@
 
   <!-- CENTER -->
   <section class="col" id="center">
+    <div class="card calls" id="calls">
+      <div class="card-h"><h2>Live calls 🤖</h2><span class="meta-r" id="callsMeta"></span></div>
+      <div id="callsBody"><p class="empty">Scoring every coin on 11 factors…</p></div>
+      <div class="track" id="callsTrack"></div>
+    </div>
+
     <div class="card brief" id="brief">
       <div class="card-h">
         <h2>Market brief</h2>
@@ -115,9 +122,11 @@
       <div class="amt">
         <div class="amt-h"><span>Starting balance</span><b id="botBank">$1,000.00</b></div>
         <div class="amt-in"><span>$</span><input id="bankIn" type="text" inputmode="decimal" placeholder="Enter any amount" autocomplete="off"><button id="bankSet" class="btn sm" type="button">Set</button></div>
-        <div class="quick" id="bankQuick"><button data-v="10" type="button">$10</button><button data-v="100" type="button">$100</button><button data-v="500" type="button">$500</button><button data-v="1000" type="button">$1000</button></div>
+        <div class="quick" id="bankQuick"><button data-v="1" type="button">$1</button><button data-v="5" type="button">$5</button><button data-v="10" type="button">$10</button><button data-v="100" type="button">$100</button></div>
         <div class="amt-h"><span>Per trade</span><div class="mini-seg" id="sizeMode"><button data-m="auto" type="button">Auto %</button><button data-m="fixed" type="button">Fixed $</button></div></div>
         <div class="amt-in" id="sizeFixedRow" hidden><span>$</span><input id="sizeIn" type="text" inputmode="decimal" placeholder="Amount per trade" autocomplete="off"></div>
+        <div class="amt-h"><span>fomo fee per trade</span><span class="feebox"><input id="feeIn" type="text" inputmode="decimal" autocomplete="off">%</span></div>
+        <p class="fine" id="feePreview"></p>
       </div>
       <button id="botRun" class="btn big go" type="button">Start bot</button>
       <div class="row2">
@@ -187,15 +196,23 @@
   </div>
 </div>
 
+<div class="themepop" id="themePop" hidden>
+  <h3>Theme</h3>
+  <div class="themes" id="themeList"></div>
+  <h3>Text size</h3>
+  <div class="seg" id="fzSeg"><button data-fz="1" type="button">Normal</button><button data-fz="1.12" type="button">Large</button><button data-fz="1.25" type="button">Huge</button></div>
+</div>
+
 <div id="toasts"></div>
 
-<script src="js/util.js?v=20261002a"></script>
-<script src="js/markets.js?v=20261002a"></script>
-<script src="js/social.js?v=20261002a"></script>
-<script src="js/radar.js?v=20261002a"></script>
-<script src="js/bot.js?v=20261002a"></script>
-<script src="js/ai.js?v=20261002a"></script>
-<script src="js/panels.js?v=20261002a"></script>
-<script src="js/app.js?v=20261002a"></script>
+<script src="js/util.js?v=20261002c"></script>
+<script src="js/markets.js?v=20261002c"></script>
+<script src="js/social.js?v=20261002c"></script>
+<script src="js/radar.js?v=20261002c"></script>
+<script src="js/engine.js?v=20261002c"></script>
+<script src="js/bot.js?v=20261002c"></script>
+<script src="js/ai.js?v=20261002c"></script>
+<script src="js/panels.js?v=20261002c"></script>
+<script src="js/app.js?v=20261002c"></script>
 </body>
 </html>

@@ -4,22 +4,21 @@
 (function () {
   const F = window.F;
 
+  // The engine decides what's worth buying; the dial sets how picky the bot is and how big it bets.
   const PRESETS = {
-    chill: { label: 'Chill', emoji: '🧊', size: 0.03, maxPos: 3, minFomo: 76, minLiq: 100000, minAgeH: 6, maxRisk: 30, stop: 0.08, arm: 0.1, trail: 0.06, timeM: 120, minTx: 150 },
-    degen: { label: 'Degen', emoji: '🔥', size: 0.06, maxPos: 5, minFomo: 68, minLiq: 40000, minAgeH: 1, maxRisk: 50, stop: 0.12, arm: 0.15, trail: 0.09, timeM: 90, minTx: 80 },
-    send: { label: 'Full send', emoji: '🚀', size: 0.1, maxPos: 6, minFomo: 62, minLiq: 20000, minAgeH: 0.25, maxRisk: 65, stop: 0.18, arm: 0.2, trail: 0.12, timeM: 60, minTx: 40 },
+    chill: { label: 'Chill', emoji: '🧊', size: 0.03, maxPos: 3, minP: 0.6, maxRisk: 30, trailMul: 1.2, timeM: 120 },
+    degen: { label: 'Degen', emoji: '🔥', size: 0.06, maxPos: 5, minP: 0.55, maxRisk: 45, trailMul: 1.5, timeM: 90 },
+    send: { label: 'Full send', emoji: '🚀', size: 0.1, maxPos: 6, minP: 0.52, maxRisk: 55, trailMul: 2, timeM: 60 },
   };
-  const FEE = 0.003; // per side; real DEX fees run 0.25–1%
   const COOLDOWN = 60 * 60000;
   const MAX_POOL_SHARE = 0.015; // never take more than 1.5% of a pool — keeps entry slippage under ~3%
-  // Flat network (gas) cost per swap, in USD. Tiny on Solana, real money on Ethereum mainnet.
-  const NET_FEE = { solana: 0.01, base: 0.02, bsc: 0.05, arbitrum: 0.03, robinhood: 0.02, ethereum: 2.0, sui: 0.01, ton: 0.03, tron: 0.5 };
-  const netFee = (chain) => (NET_FEE[chain] != null ? NET_FEE[chain] : 0.05);
-  const MAX_FEE_SHARE = 0.05; // skip trades where gas in + out would eat more than 5%
 
-  const fresh = () => ({ v: 1, running: false, preset: 'degen', start: 1000, cash: 1000, fixedSize: null, pos: [], closed: [], eq: [], cool: {}, log: [], scans: 0, lastTick: 0, copilot: true, born: Date.now() });
+  // fee mirrors fomo: a % taken off every buy and every sell ($2.00 in → $1.97 into the coin at 1.5%)
+  const fresh = () => ({ v: 1, running: false, preset: 'degen', start: 1000, cash: 1000, fixedSize: null, feePct: 1.5, pos: [], closed: [], eq: [], cool: {}, log: [], scans: 0, lastTick: 0, copilot: true, born: Date.now() });
   let S = Object.assign(fresh(), F.store.get('bot', {}));
+  if (!(S.feePct >= 0)) S.feePct = 1.5;
   const save = () => F.store.set('bot', S);
+  const fee = () => S.feePct / 100;
   const P = () => PRESETS[S.preset] || PRESETS.degen;
   let pendingAI = null;
   let firstTick = true;
@@ -34,7 +33,7 @@
   const liquidation = (p, t) => {
     const mid = t && t.price != null ? t.price : p.last;
     const gross = p.qty * mid;
-    return Math.max(0, gross * (1 - F.slip(gross, (t && t.liq) || p.liqEntry)) * (1 - FEE) - netFee(p.chain));
+    return gross * (1 - F.slip(gross, (t && t.liq) || p.liqEntry)) * (1 - fee());
   };
   // what the bot would put into this token right now: fixed $ if you set one, else the dial's % of equity
   const intendedSpend = (t) => Math.min(S.fixedSize > 0 ? S.fixedSize : equity() * P().size, S.cash * 0.98, (t.liq || 0) * MAX_POOL_SHARE);
@@ -44,19 +43,19 @@
 
   function buy(t, why, ai) {
     const spend = intendedSpend(t);
-    const gas = netFee(t.chain);
-    if (spend < 0.01) return log('🪫', `Skipped $${t.sym}: not enough cash left (${F.usd(S.cash)})`, 'warn');
-    if ((2 * gas) / spend > MAX_FEE_SHARE)
-      return log('⛽', `Skipped $${t.sym}: network fees (${F.usd(2 * gas)} round trip on ${t.chain}) would eat ${Math.round(((2 * gas) / spend) * 100)}% of a ${F.usd(spend)} trade`, 'warn');
+    if (spend < 0.01) return log('🪫', `Skipped $${t.sym}: no cash left (${F.usd(S.cash)})`, 'warn');
     const slip = F.slip(spend, t.liq);
-    const fillPx = (t.price * (1 + slip)) / (1 - FEE);
-    const qty = (spend - gas) / fillPx;
+    const fillPx = (t.price * (1 + slip)) / (1 - fee());
+    const qty = spend / fillPx;
+    const sg = t.sig || {};
+    const stopPx = sg.stop || t.price * 0.88, tp1 = sg.tp1 || t.price * 1.15;
     S.cash -= spend;
     S.pos.push({
       id: F.uid(), key: t.key, sym: t.sym, chain: t.chain, icon: t.icon, qty, cost: spend, entryPx: t.price, fillPx,
       openedAt: Date.now(), peak: t.price, last: t.price, lastAt: Date.now(), liqEntry: t.liq, fomoEntry: t.fomo, why, ai: ai || null, partial: false,
+      stopPx, tp1, trailPct: Math.max(0.06, (sg.atr || 0.045) * P().trailMul), p: sg.p || null,
     });
-    log('🚀', `BUY $${t.sym} — ${F.usd(spend)} at ${F.price(t.price)} (fill ${F.price(fillPx)} after ${(FEE * 100).toFixed(1)}% fee + ${(slip * 100).toFixed(2)}% slippage + ${F.usd(gas)} gas). ${why}`, 'buy');
+    log('🚀', `BUY $${t.sym}: ${F.usd(spend)} in, ${F.usd(spend * (1 - fee()))} into the coin after the ${S.feePct}% fee, at ${F.price(t.price)}${slip > 0.001 ? ` (+${(slip * 100).toFixed(2)}% slippage)` : ''}. Stop ${F.price(stopPx)} · target ${F.price(tp1)}. ${why}`, 'buy');
     F.emit('bot:trade', { side: 'buy', sym: t.sym });
   }
 
@@ -65,7 +64,7 @@
     const qty = p.qty * frac;
     const gross = qty * mid;
     const slip = F.slip(gross, (t && t.liq) || p.liqEntry);
-    const proceeds = Math.max(0, gross * (1 - slip) * (1 - FEE) - netFee(p.chain));
+    const proceeds = gross * (1 - slip) * (1 - fee());
     const cost = p.cost * frac;
     const pnl = proceeds - cost;
     S.cash += proceeds;
@@ -105,12 +104,18 @@
       p.peak = Math.max(p.peak, t.price);
       const chg = t.price / p.entryPx - 1;
       const held = (Date.now() - p.openedAt) / 60000;
+      const stop = p.stopPx || p.entryPx * 0.88;
+      const tp1 = p.tp1 || p.entryPx * 1.15;
+      const trail = p.trailPct || 0.09;
       if (t.pulled) return sell(p, t, 'liquidity was pulled from the pool', '🚨');
-      if (t.flags.some((f) => f[1] === '🍯')) return sell(p, t, 'honeypot signs (zero sells) — in real life this sell might fail', '🍯');
-      if (chg <= -pr.stop) return sell(p, t, `stop-loss hit (${F.pct(chg * 100)})`, '🛑');
-      if (p.peak >= p.entryPx * (1 + pr.arm) && t.price <= p.peak * (1 - pr.trail))
-        return sell(p, t, `trailing stop — gave back ${(pr.trail * 100).toFixed(0)}% from the ${F.pct((p.peak / p.entryPx - 1) * 100)} peak`, chg > 0 ? '💰' : '🛑');
-      if (!p.partial && chg >= 0.5) return sell(p, t, `banking half at ${F.pct(chg * 100)}`, '💰', 0.5);
+      if ((t.safety && (t.safety.honeypot || t.safety.rugged)) || t.flags.some((f) => f[1] === '🍯')) return sell(p, t, 'honeypot / rug signs — in real life this sell might fail', '🍯');
+      if (t.price <= stop) return sell(p, t, `${p.partial ? 'breakeven stop' : 'stop-loss'} hit at ${F.price(stop)} (${F.pct(chg * 100)})`, p.partial ? '💰' : '🛑');
+      if (!p.partial && t.price >= tp1) {
+        sell(p, t, `target hit (${F.pct(chg * 100)}) — banking half, stop moved to breakeven`, '💰', 0.5);
+        p.stopPx = Math.max(stop, p.entryPx);
+        return;
+      }
+      if (p.partial && t.price <= p.peak * (1 - trail)) return sell(p, t, `trailing stop — gave back ${(trail * 100).toFixed(0)}% from the ${F.pct((p.peak / p.entryPx - 1) * 100)} peak`, chg > 0 ? '💰' : '🛑');
       if (held > pr.timeM && Math.abs(chg) < 0.05) return sell(p, t, `time stop — flat for ${Math.round(held)} min`, '⏰');
     });
   }
@@ -119,21 +124,16 @@
   function gate(t) {
     const pr = P();
     const why = [];
-    const ageH = t.created ? (Date.now() - t.created) / 3600000 : 0;
-    const h1 = t.tx.h1 || { b: 0, s: 0 };
+    const sg = t.sig;
     if (S.pos.some((p) => p.key === t.key)) why.push('already holding');
     if (S.cool[t.key] && Date.now() - S.cool[t.key] < COOLDOWN) why.push('cooling down after exit');
-    if (Date.now() - t.at > 60000) why.push('price not fresh');
-    if (t.pulled || t.flags.some((f) => f[1] === '🍯')) why.push('rug/honeypot signs');
-    if ((t.liq || 0) < pr.minLiq) why.push(`liquidity ${F.usd(t.liq)} < ${F.usd(pr.minLiq, 0)}`);
-    if (ageH < pr.minAgeH) why.push(`only ${ageH < 1 ? Math.round(ageH * 60) + 'm' : ageH.toFixed(1) + 'h'} old`);
-    if (t.risk > pr.maxRisk) why.push(`risk ${t.risk} > ${pr.maxRisk}`);
-    if (h1.b + h1.s < pr.minTx) why.push(`${h1.b + h1.s} trades/h < ${pr.minTx}`);
-    if (h1.s < 5) why.push('almost no sellers');
-    if (Math.min(t.ch.h6 == null ? 0 : t.ch.h6, t.ch.h24 == null ? 0 : t.ch.h24) <= -50) why.push('already dumped');
-    const want = intendedSpend(t);
-    if (want < 0.01) why.push('no cash free');
-    else if ((2 * netFee(t.chain)) / want > MAX_FEE_SHARE) why.push(`gas too big for a ${F.usd(want)} trade`);
+    if (!sg) why.push('no read yet');
+    else if (sg.label !== 'buy') why.push(sg.reason || (sg.label === 'skip' ? 'not worth it' : 'waiting'));
+    else {
+      if (sg.p < pr.minP) why.push(`${Math.round(sg.p * 100)}% odds, ${pr.label} wants ${Math.round(pr.minP * 100)}%+`);
+      if (t.risk > pr.maxRisk) why.push(`risk ${t.risk}, ${pr.label} allows ${pr.maxRisk}`);
+    }
+    if (intendedSpend(t) < 0.01) why.push('no cash free');
     return why;
   }
 
@@ -141,25 +141,24 @@
     const pr = P();
     const all = F.radar.list();
     const scored = all.map((t) => ({ t, why: gate(t) }));
-    const safe = scored.filter((x) => !x.why.length).sort((a, b) => b.t.fomo - a.t.fomo);
-    const near = scored.filter((x) => x.why.length).sort((a, b) => b.t.fomo - a.t.fomo).slice(0, 3);
-    thought.near = [...safe.slice(0, 3).map((x) => ({ t: x.t, why: x.t.fomo >= pr.minFomo ? ['ready'] : [`FOMO ${x.t.fomo} < ${pr.minFomo}`] })), ...near].slice(0, 4);
+    const ready = scored.filter((x) => !x.why.length).sort((a, b) => b.t.sig.ev - a.t.sig.ev);
+    const near = scored.filter((x) => x.why.length && x.t.sig && x.t.sig.label !== 'skip').sort((a, b) => b.t.sig.p - a.t.sig.p).slice(0, 3);
+    thought.near = [...ready.slice(0, 3).map((x) => ({ t: x.t, why: [`ready · EV ${F.pct(x.t.sig.ev * 100)} after fees`] })), ...near].slice(0, 4);
     const slots = pr.maxPos - S.pos.length;
-    const best = safe[0];
+    const best = ready[0];
+    const buys = all.filter((t) => t.sig && t.sig.label === 'buy').length;
     let text;
     if (!all.length) text = 'No radar prices yet — waiting on DexScreener / GeckoTerminal.';
     else if (slots <= 0) text = `All ${pr.maxPos} slots full. Riding ${S.pos.map((p) => '$' + p.sym + ' ' + F.pct((p.last / p.entryPx - 1) * 100, 0)).join(', ')}.`;
-    else if (!best) text = `Scanned ${all.length} tokens — none pass the ${pr.label} safety gates right now. Patience is a position.`;
-    else if (best.t.fomo < pr.minFomo) text = `Scanned ${all.length} · ${safe.length} pass safety · best is $${best.t.sym} ${best.t.fomo} — needs ${pr.minFomo}. Waiting for real flow.`;
-    else text = `Scanned ${all.length} · ${safe.length} pass safety · $${best.t.sym} ${best.t.fomo} clears the bar.`;
+    else if (!best) text = `Scanned ${all.length} coins · ${buys} worth buying right now${buys ? `, none meet ${pr.label}'s bar` : ''}. Waiting for a real edge — no trade is a position too.`;
+    else text = `Scanned ${all.length} coins · ${buys} worth buying · taking $${best.t.sym}: ${Math.round(best.t.sig.p * 100)}% odds, EV ${F.pct(best.t.sig.ev * 100)} after fees.`;
     thought.text = text;
 
-    if (S.scans % 6 === 1) log('🔍', `Scan #${S.scans}: ${all.length} tokens, ${safe.length} pass safety${best ? `, best $${best.t.sym} (${best.t.fomo})` : ''}.`, 'scan');
-    if (slots <= 0 || !best || best.t.fomo < pr.minFomo || pendingAI) return;
+    if (S.scans % 8 === 1) log('🔍', `Scan #${S.scans}: ${all.length} coins, ${buys} worth buying${best ? `, best $${best.t.sym} (${Math.round(best.t.sig.p * 100)}%, EV ${F.pct(best.t.sig.ev * 100)})` : ''}.`, 'scan');
+    if (slots <= 0 || !best || pendingAI) return;
 
     const t = best.t;
-    const p = t.parts || {};
-    const why = `FOMO ${t.fomo}: ${F.pct(t.ch.m5)} 5m / ${F.pct(t.ch.h1)} 1h, ${Math.round(p.bp * 100)}% buys, vol ${p.accel > 0 ? 'accelerating' : 'steady'}, ${t.buzz} social mention${t.buzz === 1 ? '' : 's'}, risk ${t.risk}.`;
+    const why = `Engine: ${Math.round(t.sig.p * 100)}% odds of target before stop, EV ${F.pct(t.sig.ev * 100)} after fees — ${t.sig.why.slice(0, 3).map((x) => x.txt.toLowerCase()).join('; ')}.`;
     if (S.copilot && F.ai && F.ai.ready()) {
       pendingAI = t.key;
       thought.text = `Asking Claude to sanity-check $${t.sym} before buying…`;
@@ -276,7 +275,7 @@
       const val = liquidation(p, t);
       const pnl = val - p.cost;
       const chg = (p.last / p.entryPx - 1) * 100;
-      const sub = `${F.usd(p.cost)} in · ${F.ago(p.openedAt)} · stop $${F.price(p.entryPx * (1 - pr.stop))}${p.partial ? ' · half banked' : ''}`;
+      const sub = `${F.usd(p.cost)} in · ${F.ago(p.openedAt)} · stop $${F.price(p.stopPx || p.entryPx * 0.88)}${p.partial ? ' · half banked' : ` · target $${F.price(p.tp1 || p.entryPx * 1.15)}`}`;
       const right = `<b>${F.usd(val)}</b>${F.chg(chg)}`;
       const foot = `<button class="xs" data-sell="${p.id}" type="button">Sell now</button> <span class="dim">P&amp;L ${pnl >= 0 ? '+' : '−'}${F.usd(Math.abs(pnl))} after fees</span>`;
       let el = posEls.get(p.id);
@@ -348,7 +347,10 @@
     ].map(([k, v]) => `<div><span>${k}</span><b>${v}</b></div>`).join('');
     F.$$('#botRisk button').forEach((b) => b.classList.toggle('on', b.dataset.p === S.preset));
     const fixed = S.fixedSize > 0;
-    F.$('#botRiskNote').textContent = `${fixed ? F.usd(S.fixedSize) + ' per trade' : (pr.size * 100).toFixed(0) + '% of balance per trade'}, up to ${pr.maxPos} at once. Stop −${(pr.stop * 100).toFixed(0)}%, trailing ${(pr.trail * 100).toFixed(0)}% once up ${(pr.arm * 100).toFixed(0)}%. Only buys FOMO ${pr.minFomo}+ with ${F.usd(pr.minLiq, 0)}+ liquidity and risk under ${pr.maxRisk}.`;
+    F.$('#botRiskNote').textContent = `${fixed ? F.usd(S.fixedSize) + ' per trade' : (pr.size * 100).toFixed(0) + '% of balance per trade'}, up to ${pr.maxPos} at once. Buys only "Worth buying" calls with ${Math.round(pr.minP * 100)}%+ odds and risk under ${pr.maxRisk}. Stops and targets scale with each coin's volatility; half comes off at the target, the rest trails.`;
+    const ex = fixed ? S.fixedSize : 2;
+    if (document.activeElement !== F.$('#feeIn')) F.$('#feeIn').value = S.feePct;
+    F.$('#feePreview').textContent = `${F.usd(ex)} in → ${F.usd(ex * (1 - fee()))} into the coin. The fee is charged again when it sells.`;
     F.$('#botBank').textContent = F.usd(S.start);
     F.$$('#sizeMode button').forEach((b) => b.classList.toggle('on', (b.dataset.m === 'fixed') === fixed));
     F.$('#sizeFixedRow').hidden = !fixed;
@@ -360,8 +362,9 @@
       `<p>🤖 ${F.esc(thought.text)}</p>` +
       (thought.near.length
         ? '<ul>' + thought.near.map(({ t, why }) => {
-            const lv = t.fomo >= 75 ? 4 : t.fomo >= 62 ? 3 : t.fomo >= 45 ? 2 : 1;
-            return `<li data-key="${F.esc(t.key)}"><span class="score s${lv}">${t.fomo}</span><b>${F.esc(t.sym)}</b><span class="mut">${F.esc(why.join(' · '))}</span></li>`;
+            const pp = t.sig ? Math.round(t.sig.p * 100) : 0;
+            const lv = t.sig && t.sig.label === 'buy' ? 4 : pp >= 50 ? 3 : 2;
+            return `<li data-key="${F.esc(t.key)}"><span class="score s${lv}">${pp}%</span><b>${F.esc(t.sym)}</b><span class="mut">${F.esc(why.join(' · '))}</span></li>`;
           }).join('') + '</ul>'
         : '');
 
@@ -451,6 +454,14 @@
       save();
       render();
     };
+    F.$('#feeIn').onchange = (e) => {
+      const n = parseFloat(String(e.target.value).replace(/[%\s]/g, ''));
+      if (!(n >= 0 && n < 50)) return F.toast('Fee must be between 0% and 50%', 'bad');
+      S.feePct = Math.round(n * 100) / 100;
+      log('🧾', `Fee set to ${S.feePct}% per buy and per sell.`, 'info');
+      save();
+      render();
+    };
     F.$('#sizeIn').onchange = (e) => {
       const n = amount(e.target.value);
       if (!n) return F.toast('Enter an amount above $0', 'bad');
@@ -483,6 +494,8 @@
   let deb;
   F.bot = {
     PRESETS,
+    feePct: () => S.feePct,
+    tradeSize: (t) => intendedSpend(t),
     state: () => S,
     heldKeys: () => new Set(S.pos.map((p) => p.key)),
     stats,

@@ -344,7 +344,18 @@
     recent: (ms) => order.filter((p) => Date.now() - p.ts < ms),
     mentions: (sym, ms = 2 * 3600000) => order.filter((p) => Date.now() - p.ts < ms && p.tickers.includes(sym)),
     score: (p) => (p.ai ? p.ai.sentiment : p.sent),
+    hydrate() {
+      F.store.get('feed-snap', []).forEach((p) => {
+        if (!posts.has(p.id) && Date.now() - p.ts < 6 * 3600000) posts.set(p.id, p);
+      });
+      if (posts.size) {
+        reorder();
+        F.emit('social', []);
+      }
+    },
     start() {
+      this.hydrate();
+      setInterval(() => F.store.set('feed-snap', order.filter((p) => !p.hidden).slice(0, 120)), 30000);
       pollOutlets();
       pollDirectRSS();
       setTimeout(pollCrowd, 1500);

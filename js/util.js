@@ -99,7 +99,8 @@
     if (a >= 1e9) return s + '$' + (a / 1e9).toFixed(2) + 'B';
     if (a >= 1e6) return s + '$' + (a / 1e6).toFixed(2) + 'M';
     if (a >= 1e4) return s + '$' + (a / 1e3).toFixed(1) + 'K';
-    return s + '$' + a.toLocaleString('en-US', { minimumFractionDigits: dp == null ? 2 : dp, maximumFractionDigits: dp == null ? 2 : dp });
+    // under a dollar, keep up to 4 decimals so a $0.12 trade still shows its fee ($0.1182)
+    return s + '$' + a.toLocaleString('en-US', { minimumFractionDigits: dp == null ? 2 : dp, maximumFractionDigits: dp == null ? (a < 1 ? 4 : 2) : dp });
   };
   F.pct = (x, dp = 1) => {
     x = F.num(x);
