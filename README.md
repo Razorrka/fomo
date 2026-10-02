@@ -43,3 +43,7 @@ Modules talk through `F.emit / F.on` events: `social`, `radar`, `markets`, `tick
 - Claude gets only the snapshot; citations that don't exist are stripped; tickers not in the data are dropped.
 - Paid DexScreener promotion is always labelled 💸.
 - The bot is paper only. Fills pay 0.3% fee + constant-product slippage against real pool liquidity + per-chain gas, in and out. Trades where gas would eat >5% are skipped. Positions are valued at liquidation price. Scoreboard starts at zero.
+
+## Publishing
+
+GitHub Pages serves from `main`. Bump the `?v=` tag on the CSS/JS links in `index.html` with every release so browsers don't keep a cached copy for 10 minutes.
