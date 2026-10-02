@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#0b0b10">
+<title>fomo radar</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='88'>🚀</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="fomo.css">
+</head>
+<body>
+
+<header class="top">
+  <div class="brand"><span class="logo">fomo</span><span class="logo-tag">radar</span></div>
+  <form class="search" id="askForm" autocomplete="off">
+    <svg viewBox="0 0 24 24" class="ic"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <input id="askIn" placeholder="Ask fomo AI about a token, a post, or what's moving…">
+    <kbd>/</kbd>
+  </form>
+  <div class="topr">
+    <button class="stat" id="topBot" type="button" title="Bot equity">
+      <b id="topEq">$1,000.00</b><span id="topEqSub">bot · paper</span>
+    </button>
+    <button class="stat" id="aiStatus" type="button"></button>
+    <button class="iconbtn" id="settingsBtn" type="button" title="Settings"><svg viewBox="0 0 24 24" class="ic"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
+  </div>
+</header>
+
+<div class="askout" id="askOut" hidden></div>
+
+<nav class="tabs" id="tabs">
+  <button data-col="feed" type="button">Feed</button>
+  <button data-col="center" type="button">Radar</button>
+  <button data-col="bot" type="button">Bot</button>
+</nav>
+
+<main class="grid">
+
+  <!-- FEED -->
+  <section class="col card" id="feed">
+    <div class="card-h">
+      <div class="ttabs" id="feedFilters">
+        <button data-f="all" class="on" type="button">Feed</button>
+        <button data-f="outlets" type="button">Verified</button>
+        <button data-f="whale" type="button">Whales</button>
+        <button data-f="news" type="button">News</button>
+        <button data-f="hack" type="button">Hacks</button>
+        <button data-f="crowd" type="button">Crowd</button>
+        <button data-f="stocks" type="button">Stocks</button>
+      </div>
+    </div>
+    <div class="meta" id="feedMeta">Connecting…</div>
+    <div class="ftick" id="feedTicker" hidden></div>
+    <div class="feed-list" id="feedList"></div>
+  </section>
+
+  <!-- CENTER -->
+  <section class="col" id="center">
+    <div class="card brief" id="brief">
+      <div class="card-h">
+        <h2>Market brief</h2>
+        <button id="briefBtn" class="btn sm" type="button">Brief me</button>
+      </div>
+      <div id="briefBody"></div>
+      <div id="aiErr" class="err" hidden></div>
+    </div>
+
+    <div class="card">
+      <div class="card-h">
+        <h2>Meme radar</h2>
+        <span class="meta-r" id="radarMeta"></span>
+      </div>
+      <div class="pills" id="radarSort">
+        <button data-s="fomo" class="on" type="button">Hot</button>
+        <button data-s="m5" type="button">5m</button>
+        <button data-s="h1" type="button">1h</button>
+        <button data-s="vol" type="button">Volume</button>
+        <button data-s="new" type="button">New</button>
+        <button data-s="risk" type="button">Riskiest</button>
+        <label class="switch"><input type="checkbox" id="hideRisky" checked><i></i>Hide dangerous</label>
+      </div>
+      <div class="radar" id="radarList"></div>
+      <p class="fine pad">FOMO score = momentum + order flow + social buzz right now. It measures hype, not quality. Risk = rug signals: thin liquidity, new pools, prior dumps, no sellers, liquidity pulls. "Promoted" = paid DexScreener placement.</p>
+    </div>
+
+    <div class="mkts">
+      <div class="card"><div class="card-h"><h2>Crypto</h2><span class="meta-r">Coinbase · live</span></div><div id="mktCrypto"></div></div>
+      <div class="card"><div class="card-h"><h2>Stocks</h2><span class="meta-r" id="nyse"></span></div><div id="mktStocks"></div><p class="fine pad" id="stockNote"></p></div>
+    </div>
+  </section>
+
+  <!-- BOT -->
+  <section class="col card" id="bot">
+    <div class="card-h">
+      <h2>fomo bot 🤖 <span class="paper" title="Simulated money. Never touches a wallet or exchange.">Paper</span></h2>
+      <span class="status" id="botStatus"></span>
+    </div>
+    <div class="bot-hero">
+      <div class="eq" id="botEq">$1,000.00</div>
+      <div class="ret" id="botRet"></div>
+      <div class="curve" id="botCurve"></div>
+    </div>
+    <div class="pad">
+      <div class="seg" id="botRisk">
+        <button data-p="chill" type="button">Chill</button>
+        <button data-p="degen" type="button">Degen</button>
+        <button data-p="send" type="button">Full send 🚀</button>
+      </div>
+      <p class="fine" id="botRiskNote"></p>
+      <button id="botRun" class="btn big go" type="button">Start bot</button>
+      <div class="row2">
+        <button id="botPanic" class="btn ghost" type="button">Sell all</button>
+        <button id="botReset" class="btn ghost" type="button">Reset</button>
+      </div>
+      <label class="switch line"><input type="checkbox" id="botCopilot"><i></i><span>Claude risk officer <em id="botCopilotNote"></em></span></label>
+    </div>
+    <div class="kpi" id="botKpi"></div>
+    <div class="thought" id="botThought"></div>
+    <div class="sec">
+      <div class="sec-h"><h3>Your positions</h3><div class="mini-seg" id="posTabs"><button data-v="open" class="on" type="button">Open</button><button data-v="closed" type="button">Closed</button></div></div>
+      <div id="botPos"></div>
+      <div id="botClosed" hidden></div>
+    </div>
+    <div class="sec">
+      <div class="sec-h"><h3>Activity</h3></div>
+      <div class="log" id="botLog"></div>
+    </div>
+    <p class="fine pad">Paper trading on live prices. Every fill pays a 0.3% swap fee plus slippage computed from the pool's real liquidity, in and out. Positions are valued at what they'd sell for. The bot runs while this page is open.</p>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="foot-tape" id="tape"></div>
+  <div class="foot-r">
+    <button class="live" id="healthBtn" type="button"><i class="dot ok"></i><span id="healthSum">Live</span></button>
+    <span id="fng"></span>
+    <span class="dim">Paper trading · Not financial advice</span>
+  </div>
+</footer>
+
+<aside class="drawer" id="drawer" hidden><div id="drawerBody"></div></aside>
+
+<div class="modal" id="settings" hidden>
+  <div class="mcard">
+    <div class="card-h"><h2>Settings</h2><button class="iconbtn" data-close type="button">✕</button></div>
+    <h3>Claude AI <span class="dim">optional</span></h3>
+    <p class="fine">Paste an Anthropic API key from <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a>. It's stored only in this browser and sent only to api.anthropic.com. Without a key everything still works: the brief becomes an auto-summary and sentiment uses a word list.</p>
+    <label class="fld"><span>API key</span><input id="setKey" type="password" placeholder="sk-ant-…" spellcheck="false"></label>
+    <label class="fld"><span>Model</span><select id="setModel"></select></label>
+    <label class="fld"><span>Daily AI budget (USD)</span><input id="setBudget" type="number" min="0.5" step="0.5"></label>
+    <label class="switch line"><input type="checkbox" id="setAutoTag"><i></i><span>Tag new posts (sentiment, credibility, takeaway) every 2 min</span></label>
+    <label class="switch line"><input type="checkbox" id="setAutoBrief"><i></i><span>Refresh the brief every 15 min</span></label>
+    <p class="fine" id="setSpend"></p>
+    <div class="row2">
+      <button class="btn go" id="setSave" type="button">Save</button>
+      <button class="btn" id="setTest" type="button">Test key</button>
+      <button class="btn ghost" id="setForget" type="button">Remove key</button>
+    </div>
+    <p class="msg" id="setMsg"></p>
+    <h3>How fomo radar stays accurate</h3>
+    <ul class="fine list">
+      <li>Every post links to its original. Outlets are followed by their verified domain handle, so impostor accounts can't slip in.</li>
+      <li>Claude only sees the live snapshot fomo just fetched, must cite a post or data row for every claim, and tickers that aren't in the data are dropped.</li>
+      <li>Paid DexScreener promotion is labelled and kept separate from organic trending.</li>
+      <li>The bot's scoreboard starts at zero and counts every trade, fees and slippage included.</li>
+    </ul>
+  </div>
+</div>
+
+<div class="modal" id="healthModal" hidden>
+  <div class="mcard">
+    <div class="card-h"><h2>Data sources</h2><button class="iconbtn" data-close type="button">✕</button></div>
+    <p class="fine">All free and keyless, fetched straight from your browser. No X, no Discord.</p>
+    <div id="healthList"></div>
+  </div>
+</div>
+
+<div id="toasts"></div>
+
+<script src="js/util.js"></script>
+<script src="js/markets.js"></script>
+<script src="js/social.js"></script>
+<script src="js/radar.js"></script>
+<script src="js/bot.js"></script>
+<script src="js/ai.js"></script>
+<script src="js/panels.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
