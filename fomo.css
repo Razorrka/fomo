@@ -50,7 +50,7 @@ p.pad { margin: 10px 0 14px; }
 .brand { display: flex; align-items: baseline; gap: 6px; flex: none; min-width: 150px; }
 .logo { font-size: 30px; font-weight: 800; letter-spacing: -0.045em; color: #fff; line-height: 1; }
 .logo-tag { font-size: 12px; font-weight: 600; color: var(--mut); letter-spacing: .02em; }
-.search { flex: 1; max-width: 560px; margin: 0 auto; display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 12px 0 14px; background: var(--card); border: 1px solid var(--line2); border-radius: 14px; color: var(--mut); }
+.search { flex: 1; min-width: 0; max-width: 560px; margin: 0 auto; display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 12px 0 14px; background: var(--card); border: 1px solid var(--line2); border-radius: 14px; color: var(--mut); }
 .search:focus-within { border-color: #3a3a4a; }
 .search input { flex: 1; min-width: 0; background: none; border: 0; outline: none; font-size: 14px; }
 .search input::placeholder { color: var(--dim); }
@@ -241,6 +241,10 @@ a.cite:hover { color: var(--ink); text-decoration: none; }
   .rr > span:nth-child(2), .rr > span:nth-child(6) { display: none; }
   .tok small .pxs { display: inline; }
 }
+@container (max-width: 340px) {
+  .rr { grid-template-columns: minmax(0, 1fr) 62px 42px; }
+  .rr > span:nth-child(10) { display: none; }
+}
 
 /* ---------- markets ---------- */
 .mkts { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -376,7 +380,7 @@ a.cite:hover { color: var(--ink); text-decoration: none; }
 .mcard .card-h { padding: 14px 0 6px; }
 .mcard h3 { font-size: 14px; font-weight: 700; margin: 18px 0 4px; }
 .fld { display: grid; gap: 6px; margin: 12px 0; font-size: 12.5px; color: var(--mut); }
-.fld input, .fld select { background: var(--tile); border: 1px solid var(--line2); border-radius: 12px; padding: 10px 12px; font-size: 14px; outline: none; }
+.fld input, .fld select { width: 100%; min-width: 0; background: var(--tile); border: 1px solid var(--line2); border-radius: 12px; padding: 10px 12px; font-size: 14px; outline: none; }
 .fld input:focus, .fld select:focus { border-color: #3a3a4a; }
 .msg { font-size: 13px; min-height: 18px; }
 .list { padding-left: 18px; }
