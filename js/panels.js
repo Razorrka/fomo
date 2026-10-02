@@ -372,8 +372,18 @@
     const p = poolOf(t);
     if (!p) return null;
     const c = candles[p.k];
-    if (c && Date.now() - c.at < 60000) return c.rows;
-    const d = await F.fetchJSON(`https://api.geckoterminal.com/api/v2/networks/${p.net}/pools/${p.pool}/ohlcv/minute?aggregate=5&limit=72&currency=usd&token=${t.addr}`, { headers: { accept: 'application/json' } });
+    if (c && Date.now() - c.at < 60000) {
+      if (c.failed) throw new Error('chart unavailable');
+      return c.rows;
+    }
+    let d;
+    try {
+      d = await F.gtFetch(`https://api.geckoterminal.com/api/v2/networks/${p.net}/pools/${p.pool}/ohlcv/minute?aggregate=5&limit=72&currency=usd&token=${t.addr}`);
+    } catch (e) {
+      candles[p.k] = { at: Date.now(), rows: c ? c.rows : null, failed: !c };
+      if (c && c.rows) return c.rows;
+      throw e;
+    }
     const rows = (d.data.attributes.ohlcv_list || []).slice().reverse();
     candles[p.k] = { at: Date.now(), rows };
     return rows;
@@ -402,7 +412,8 @@
   const chartHTML = (t) => {
     const p = poolOf(t);
     const c = p && candles[p.k];
-    if (c) return candleSVG(c.rows);
+    if (c && c.rows) return candleSVG(c.rows);
+    if (c && c.failed) return F.spark(t.hist.map((x) => x[1]), 500, 120, 'wide');
     return p ? '<p class="empty">Loading chart…</p>' : F.spark(t.hist.map((x) => x[1]), 500, 120, 'wide');
   };
   function drawerHTML(t) {

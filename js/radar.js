@@ -39,6 +39,26 @@
   }
 
   /* ---------------- GeckoTerminal: organic trending ---------------- */
+  // GeckoTerminal's free API allows ~30 calls/min per IP and answers 429s without CORS headers, so the browser
+  // only sees "Failed to fetch". Every GT call goes through this gate: a local cap, plus exponential backoff
+  // (15s, 30s, 60s … 5 min) after any failure so the app never hammers it.
+  const GT = { until: 0, fails: 0, stamps: [] };
+  F.gtFetch = async (url) => {
+    const now = Date.now();
+    if (now < GT.until) throw new Error(`rate-limited, retrying in ${Math.ceil((GT.until - now) / 1000)}s`);
+    GT.stamps = GT.stamps.filter((t) => now - t < 60000);
+    if (GT.stamps.length >= 20) throw new Error('pausing to stay under the rate limit');
+    GT.stamps.push(now);
+    try {
+      const d = await F.fetchJSON(url, { headers: { accept: 'application/json' } });
+      GT.fails = 0;
+      return d;
+    } catch (e) {
+      GT.fails++;
+      GT.until = Date.now() + Math.min(300000, 15000 * 2 ** (GT.fails - 1));
+      throw e;
+    }
+  };
   async function pollGT() {
     const urls = [
       'https://api.geckoterminal.com/api/v2/networks/trending_pools?include=base_token&duration=1h',
@@ -46,7 +66,7 @@
     ];
     for (const u of urls) {
       try {
-        const d = await F.fetchJSON(u, { headers: { accept: 'application/json' } });
+        const d = await F.gtFetch(u);
         const inc = Object.fromEntries((d.included || []).map((x) => [x.id, x.attributes]));
         d.data.forEach((pool) => {
           const tid = pool.relationships.base_token.data.id;
@@ -79,6 +99,7 @@
         F.health.ok('geckoterminal');
       } catch (e) {
         F.health.fail('geckoterminal', e);
+        break; // don't fire the second call into a rate limit
       }
     }
     finish();
