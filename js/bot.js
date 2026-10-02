@@ -12,8 +12,12 @@
   const FEE = 0.003; // per side; real DEX fees run 0.25–1%
   const COOLDOWN = 60 * 60000;
   const MAX_POOL_SHARE = 0.015; // never take more than 1.5% of a pool — keeps entry slippage under ~3%
+  // Flat network (gas) cost per swap, in USD. Tiny on Solana, real money on Ethereum mainnet.
+  const NET_FEE = { solana: 0.01, base: 0.02, bsc: 0.05, arbitrum: 0.03, robinhood: 0.02, ethereum: 2.0, sui: 0.01, ton: 0.03, tron: 0.5 };
+  const netFee = (chain) => (NET_FEE[chain] != null ? NET_FEE[chain] : 0.05);
+  const MAX_FEE_SHARE = 0.05; // skip trades where gas in + out would eat more than 5%
 
-  const fresh = () => ({ v: 1, running: false, preset: 'degen', start: 1000, cash: 1000, pos: [], closed: [], eq: [], cool: {}, log: [], scans: 0, lastTick: 0, copilot: true, born: Date.now() });
+  const fresh = () => ({ v: 1, running: false, preset: 'degen', start: 1000, cash: 1000, fixedSize: null, pos: [], closed: [], eq: [], cool: {}, log: [], scans: 0, lastTick: 0, copilot: true, born: Date.now() });
   let S = Object.assign(fresh(), F.store.get('bot', {}));
   const save = () => F.store.set('bot', S);
   const P = () => PRESETS[S.preset] || PRESETS.degen;
@@ -30,26 +34,29 @@
   const liquidation = (p, t) => {
     const mid = t && t.price != null ? t.price : p.last;
     const gross = p.qty * mid;
-    return gross * (1 - F.slip(gross, (t && t.liq) || p.liqEntry)) * (1 - FEE);
+    return Math.max(0, gross * (1 - F.slip(gross, (t && t.liq) || p.liqEntry)) * (1 - FEE) - netFee(p.chain));
   };
+  // what the bot would put into this token right now: fixed $ if you set one, else the dial's % of equity
+  const intendedSpend = (t) => Math.min(S.fixedSize > 0 ? S.fixedSize : equity() * P().size, S.cash * 0.98, (t.liq || 0) * MAX_POOL_SHARE);
   function equity() {
     return S.cash + S.pos.reduce((s, p) => s + liquidation(p, F.radar.get(p.key)), 0);
   }
 
   function buy(t, why, ai) {
-    const pr = P();
-    const eq = equity();
-    let spend = Math.min(eq * pr.size, S.cash * 0.98, t.liq * MAX_POOL_SHARE);
-    if (spend < 10) return log('🪫', `Skipped $${t.sym}: position would be under $10 (cash ${F.usd(S.cash)})`, 'warn');
+    const spend = intendedSpend(t);
+    const gas = netFee(t.chain);
+    if (spend < 0.01) return log('🪫', `Skipped $${t.sym}: not enough cash left (${F.usd(S.cash)})`, 'warn');
+    if ((2 * gas) / spend > MAX_FEE_SHARE)
+      return log('⛽', `Skipped $${t.sym}: network fees (${F.usd(2 * gas)} round trip on ${t.chain}) would eat ${Math.round(((2 * gas) / spend) * 100)}% of a ${F.usd(spend)} trade`, 'warn');
     const slip = F.slip(spend, t.liq);
     const fillPx = (t.price * (1 + slip)) / (1 - FEE);
-    const qty = spend / fillPx;
+    const qty = (spend - gas) / fillPx;
     S.cash -= spend;
     S.pos.push({
       id: F.uid(), key: t.key, sym: t.sym, chain: t.chain, icon: t.icon, qty, cost: spend, entryPx: t.price, fillPx,
       openedAt: Date.now(), peak: t.price, last: t.price, lastAt: Date.now(), liqEntry: t.liq, fomoEntry: t.fomo, why, ai: ai || null, partial: false,
     });
-    log('🚀', `BUY $${t.sym} — ${F.usd(spend)} at ${F.price(t.price)} (fill ${F.price(fillPx)} after ${(FEE * 100).toFixed(1)}% fee + ${(slip * 100).toFixed(2)}% slippage). ${why}`, 'buy');
+    log('🚀', `BUY $${t.sym} — ${F.usd(spend)} at ${F.price(t.price)} (fill ${F.price(fillPx)} after ${(FEE * 100).toFixed(1)}% fee + ${(slip * 100).toFixed(2)}% slippage + ${F.usd(gas)} gas). ${why}`, 'buy');
     F.emit('bot:trade', { side: 'buy', sym: t.sym });
   }
 
@@ -58,7 +65,7 @@
     const qty = p.qty * frac;
     const gross = qty * mid;
     const slip = F.slip(gross, (t && t.liq) || p.liqEntry);
-    const proceeds = gross * (1 - slip) * (1 - FEE);
+    const proceeds = Math.max(0, gross * (1 - slip) * (1 - FEE) - netFee(p.chain));
     const cost = p.cost * frac;
     const pnl = proceeds - cost;
     S.cash += proceeds;
@@ -124,7 +131,9 @@
     if (h1.b + h1.s < pr.minTx) why.push(`${h1.b + h1.s} trades/h < ${pr.minTx}`);
     if (h1.s < 5) why.push('almost no sellers');
     if (Math.min(t.ch.h6 == null ? 0 : t.ch.h6, t.ch.h24 == null ? 0 : t.ch.h24) <= -50) why.push('already dumped');
-    if ((t.liq || 0) * MAX_POOL_SHARE < 10) why.push('too illiquid to size');
+    const want = intendedSpend(t);
+    if (want < 0.01) why.push('no cash free');
+    else if ((2 * netFee(t.chain)) / want > MAX_FEE_SHARE) why.push(`gas too big for a ${F.usd(want)} trade`);
     return why;
   }
 
@@ -225,6 +234,96 @@
   const ico = (src, sym) => (src ? `<img class="ti" src="${F.esc(src)}" alt="" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('i'),{className:'ti',textContent:'${F.esc(String(sym).charAt(0).toUpperCase())}'}))">` : `<i class="ti">${F.esc(String(sym).charAt(0).toUpperCase())}</i>`);
   const money = (x) => `<span class="${F.dir(x)}">${x >= 0 ? '+' : '−'}${F.usd(Math.abs(x))}</span>`;
 
+  // the balance glides to its new value instead of jumping
+  let shownEq = null, eqAnim = 0;
+  function tweenEq(to) {
+    const el = F.$('#botEq');
+    const from = shownEq == null ? to : shownEq;
+    shownEq = to;
+    cancelAnimationFrame(eqAnim);
+    if (Math.abs(to - from) < 0.005) return void (el.textContent = F.usd(to));
+    el.classList.remove('fl-up', 'fl-dn');
+    void el.offsetWidth;
+    el.classList.add(to > from ? 'fl-up' : 'fl-dn');
+    const t0 = performance.now();
+    const step = (now) => {
+      const k = Math.min(1, (now - t0) / 700);
+      el.textContent = F.usd(from + (to - from) * (1 - Math.pow(1 - k, 3)));
+      if (k < 1) eqAnim = requestAnimationFrame(step);
+    };
+    eqAnim = requestAnimationFrame(step);
+  }
+
+  const posEls = new Map();
+  function renderPositions(pr) {
+    const box = F.$('#botPos');
+    const ids = new Set(S.pos.map((p) => p.id));
+    posEls.forEach((el, id) => {
+      if (!ids.has(id)) {
+        el.remove();
+        posEls.delete(id);
+      }
+    });
+    const empty = box.querySelector('.empty');
+    if (!S.pos.length) {
+      if (!empty) box.innerHTML = `<p class="empty">No open positions. ${S.running ? 'Hunting…' : 'Start the bot to let it trade.'}</p>`;
+      else empty.textContent = `No open positions. ${S.running ? 'Hunting…' : 'Start the bot to let it trade.'}`;
+      return;
+    }
+    if (empty) empty.remove();
+    S.pos.forEach((p) => {
+      const t = F.radar.get(p.key);
+      const val = liquidation(p, t);
+      const pnl = val - p.cost;
+      const chg = (p.last / p.entryPx - 1) * 100;
+      const sub = `${F.usd(p.cost)} in · ${F.ago(p.openedAt)} · stop $${F.price(p.entryPx * (1 - pr.stop))}${p.partial ? ' · half banked' : ''}`;
+      const right = `<b>${F.usd(val)}</b>${F.chg(chg)}`;
+      const foot = `<button class="xs" data-sell="${p.id}" type="button">Sell now</button> <span class="dim">P&amp;L ${pnl >= 0 ? '+' : '−'}${F.usd(Math.abs(pnl))} after fees</span>`;
+      let el = posEls.get(p.id);
+      if (!el) {
+        el = document.createElement('div');
+        el.className = 'pos enter';
+        el.dataset.key = p.key;
+        el.innerHTML = `${ico(p.icon, p.sym)}<div class="pm"><b>${F.esc(p.sym)}</b><small>${sub}</small></div><div class="pr">${right}</div>${p.ai ? `<div class="ai">🧠 ${F.esc(p.ai.thesis)}</div>` : ''}<div class="ai pf">${foot}</div>`;
+        posEls.set(p.id, el);
+        box.appendChild(el);
+        el._v = val;
+        return;
+      }
+      el.querySelector('.pm small').innerHTML = sub;
+      el.querySelector('.pr').innerHTML = right;
+      el.querySelector('.pf').innerHTML = foot;
+      if (el._v != null && Math.abs(val - el._v) > 1e-9) flashEl(el.querySelector('.pr b'), val - el._v);
+      el._v = val;
+    });
+  }
+  function flashEl(el, dir) {
+    if (!el) return;
+    el.classList.remove('fl-up', 'fl-dn');
+    void el.offsetWidth;
+    el.classList.add(dir > 0 ? 'fl-up' : 'fl-dn');
+  }
+
+  // activity: new entries slide in on top; nothing already on screen is rebuilt
+  let logTop = null;
+  function renderLog() {
+    const box = F.$('#botLog');
+    const top = S.log[0] ? S.log[0].ts + S.log[0].msg : null;
+    if (top === logTop) return;
+    const known = logTop;
+    logTop = top;
+    const row = (l) => `<div class="lg ${l.kind}"><i>${l.e}</i><span>${F.esc(l.msg)}<time data-ts="${l.ts}">${F.ago(l.ts)}</time></span></div>`;
+    const idx = known == null ? -1 : S.log.findIndex((l) => l.ts + l.msg === known);
+    if (idx <= 0 || !box.querySelector('.lg')) {
+      box.innerHTML = S.log.slice(0, 80).map(row).join('') || '<p class="empty">Nothing yet.</p>';
+      return;
+    }
+    box.insertAdjacentHTML('afterbegin', S.log.slice(0, idx).map(row).join(''));
+    [...box.children].slice(0, idx).forEach((el) => el.classList.add('enter'));
+    while (box.children.length > 80) box.lastElementChild.remove();
+  }
+
+  let closedN = -1;
   function render() {
     const root = F.$('#bot');
     if (!root) return;
@@ -234,7 +333,7 @@
     const run = F.$('#botRun');
     run.textContent = S.running ? 'Pause bot' : 'Start bot';
     run.className = 'btn big ' + (S.running ? 'stop' : 'go');
-    F.$('#botEq').textContent = F.usd(st.eq);
+    tweenEq(st.eq);
     F.$('#botRet').innerHTML = `${money(st.eq - S.start)} <span class="${F.dir(st.ret)}">(${F.pct(st.ret, 2)})</span> <span class="dim">since start</span>`;
     F.$('#botCurve').innerHTML = F.spark(S.eq.map((x) => x[1]).concat([st.eq]), 340, 56, 'wide');
     F.$('#topEq').textContent = F.usd(st.eq);
@@ -248,7 +347,12 @@
       ['Max drawdown', st.dd.toFixed(1) + '%'],
     ].map(([k, v]) => `<div><span>${k}</span><b>${v}</b></div>`).join('');
     F.$$('#botRisk button').forEach((b) => b.classList.toggle('on', b.dataset.p === S.preset));
-    F.$('#botRiskNote').textContent = `${(pr.size * 100).toFixed(0)}% per trade, up to ${pr.maxPos} at once. Stop −${(pr.stop * 100).toFixed(0)}%, trailing ${(pr.trail * 100).toFixed(0)}% once up ${(pr.arm * 100).toFixed(0)}%. Only buys FOMO ${pr.minFomo}+ with ${F.usd(pr.minLiq, 0)}+ liquidity and risk under ${pr.maxRisk}.`;
+    const fixed = S.fixedSize > 0;
+    F.$('#botRiskNote').textContent = `${fixed ? F.usd(S.fixedSize) + ' per trade' : (pr.size * 100).toFixed(0) + '% of balance per trade'}, up to ${pr.maxPos} at once. Stop −${(pr.stop * 100).toFixed(0)}%, trailing ${(pr.trail * 100).toFixed(0)}% once up ${(pr.arm * 100).toFixed(0)}%. Only buys FOMO ${pr.minFomo}+ with ${F.usd(pr.minLiq, 0)}+ liquidity and risk under ${pr.maxRisk}.`;
+    F.$('#botBank').textContent = F.usd(S.start);
+    F.$$('#sizeMode button').forEach((b) => b.classList.toggle('on', (b.dataset.m === 'fixed') === fixed));
+    F.$('#sizeFixedRow').hidden = !fixed;
+    if (fixed && document.activeElement !== F.$('#sizeIn')) F.$('#sizeIn').value = S.fixedSize;
     F.$('#botCopilot').checked = !!S.copilot;
     F.$('#botCopilotNote').textContent = F.ai && F.ai.ready() ? (S.copilot ? 'reviews every buy' : 'off') : 'needs a Claude key';
 
@@ -264,27 +368,27 @@
     F.$('#botPos').hidden = posView !== 'open';
     F.$('#botClosed').hidden = posView !== 'closed';
     F.$$('#posTabs button').forEach((b) => b.classList.toggle('on', b.dataset.v === posView));
-    F.$('#botPos').innerHTML = S.pos.length
-      ? S.pos.map((p) => {
-          const t = F.radar.get(p.key);
-          const val = liquidation(p, t);
-          const pnl = val - p.cost;
-          const chg = (p.last / p.entryPx - 1) * 100;
-          return `<div class="pos" data-key="${F.esc(p.key)}">
-            ${ico(p.icon, p.sym)}
-            <div class="pm"><b>${F.esc(p.sym)}</b><small>${F.usd(p.cost)} in · ${F.ago(p.openedAt)} · stop $${F.price(p.entryPx * (1 - pr.stop))}${p.partial ? ' · half banked' : ''}</small></div>
-            <div class="pr"><b>${F.usd(val)}</b>${F.chg(chg)}</div>
-            ${p.ai ? `<div class="ai">🧠 ${F.esc(p.ai.thesis)}</div>` : ''}
-            <div class="ai"><button class="xs" data-sell="${p.id}" type="button">Sell now</button> <span class="dim">P&amp;L ${pnl >= 0 ? '+' : '−'}${F.usd(Math.abs(pnl))} after fees</span></div>
-          </div>`;
-        }).join('')
-      : `<p class="empty">No open positions. ${S.running ? 'Hunting…' : 'Start the bot to let it trade.'}</p>`;
+    renderPositions(pr);
+    if (closedN !== S.closed.length) {
+      closedN = S.closed.length;
+      F.$('#botClosed').innerHTML = S.closed.length
+        ? S.closed.slice(0, 50).map((c) => `<div class="cl"><b>${c.emoji} ${F.esc(c.sym)}</b><span class="r ${F.dir(c.pnl)}">${c.pnl >= 0 ? '+' : '−'}${F.usd(Math.abs(c.pnl))}</span><small>${Math.round((c.closedAt - c.openedAt) / 60000)}m · ${F.esc(c.reason)}</small><small class="r">${F.chg(c.pnlPct)}</small></div>`).join('')
+        : '<p class="empty">No closed trades yet. The scoreboard starts at zero.</p>';
+    }
+    renderLog();
+  }
 
-    F.$('#botClosed').innerHTML = S.closed.length
-      ? S.closed.slice(0, 50).map((c) => `<div class="cl"><b>${c.emoji} ${F.esc(c.sym)}</b><span class="r ${F.dir(c.pnl)}">${c.pnl >= 0 ? '+' : '−'}${F.usd(Math.abs(c.pnl))}</span><small>${Math.round((c.closedAt - c.openedAt) / 60000)}m · ${F.esc(c.reason)}</small><small class="r">${F.chg(c.pnlPct)}</small></div>`).join('')
-      : '<p class="empty">No closed trades yet. The scoreboard starts at zero.</p>';
-
-    F.$('#botLog').innerHTML = S.log.slice(0, 80).map((l) => `<div class="lg ${l.kind}"><i>${l.e}</i><span>${F.esc(l.msg)}<time>${F.clock(l.ts)}</time></span></div>`).join('') || '<p class="empty">Nothing yet.</p>';
+  function startFresh(n) {
+    const keep = { preset: S.preset, copilot: S.copilot, fixedSize: S.fixedSize, running: S.running };
+    S = Object.assign(fresh(), keep, { start: n, cash: n });
+    shownEq = null;
+    logTop = null;
+    closedN = -1;
+    posEls.forEach((el) => el.remove());
+    posEls.clear();
+    log('💵', `Fresh start with ${F.usd(n)} paper money. Track record cleared.`, 'info');
+    save();
+    render();
   }
 
   function bind() {
@@ -316,13 +420,42 @@
       save();
       render();
     };
+    const hasHistory = () => S.pos.length || S.closed.length;
     F.$('#botReset').onclick = () => {
-      const v = prompt('Reset the bot and start fresh with how much paper money? (USD)', String(S.start));
-      if (v == null) return;
-      const n = Math.max(50, Math.round(+v.replace(/[$,]/g, '')) || 1000);
-      const keep = { preset: S.preset, copilot: S.copilot };
-      S = Object.assign(fresh(), keep, { start: n, cash: n });
-      log('🔄', `Fresh start with ${F.usd(n, 0)} paper money. Track record cleared.`, 'info');
+      if (hasHistory() && !confirm(`Start over with ${F.usd(S.start)}? This clears the bot's positions and track record.`)) return;
+      startFresh(S.start);
+    };
+    // bankroll: any amount above zero, cents included — quick buttons just fill the box, like fomo's buy panel
+    const amount = (v) => {
+      const n = parseFloat(String(v).replace(/[$,\s]/g, ''));
+      return Number.isFinite(n) && n > 0 ? Math.round(n * 100) / 100 : null;
+    };
+    F.$('#bankQuick').onclick = (e) => {
+      const b = e.target.closest('button[data-v]');
+      if (b) F.$('#bankIn').value = b.dataset.v;
+    };
+    const setBank = () => {
+      const n = amount(F.$('#bankIn').value);
+      if (!n) return F.toast('Enter an amount above $0', 'bad');
+      if (hasHistory() && !confirm(`Start fresh with ${F.usd(n)}? This clears the bot's positions and track record.`)) return;
+      F.$('#bankIn').value = '';
+      startFresh(n);
+    };
+    F.$('#bankSet').onclick = setBank;
+    F.$('#bankIn').onkeydown = (e) => e.key === 'Enter' && setBank();
+    F.$('#sizeMode').onclick = (e) => {
+      const b = e.target.closest('button[data-m]');
+      if (!b) return;
+      if (b.dataset.m === 'auto') S.fixedSize = null;
+      else if (!(S.fixedSize > 0)) S.fixedSize = Math.max(0.01, Math.round(S.start * P().size * 100) / 100);
+      save();
+      render();
+    };
+    F.$('#sizeIn').onchange = (e) => {
+      const n = amount(e.target.value);
+      if (!n) return F.toast('Enter an amount above $0', 'bad');
+      S.fixedSize = n;
+      log('🎯', `Each trade is now ${F.usd(n)}.`, 'info');
       save();
       render();
     };

@@ -14,20 +14,35 @@
     { h: 'protos.com', name: 'Protos', kind: 'news', emoji: '🕵️' },
     { h: 'web3isgoinggreat.com', name: 'Web3 Is Going Great', kind: 'hack', emoji: '🔥' },
     { h: 'polymarket.com', name: 'Polymarket', kind: 'breaking', emoji: '🎲' },
-    { h: 'cnbc.com', name: 'CNBC', kind: 'stocks', emoji: '📺', marketsOnly: true },
-    { h: 'marketwatch.com', name: 'MarketWatch', kind: 'stocks', emoji: '📊', marketsOnly: true },
+    // General newsrooms: only their market / crypto / economy stories get through (MARKETS_RE)
+    { h: 'bloomberg.com', name: 'Bloomberg', kind: 'stocks', marketsOnly: true },
+    { h: 'reuters.com', name: 'Reuters', kind: 'stocks', marketsOnly: true },
+    { h: 'wsj.com', name: 'The Wall Street Journal', kind: 'stocks', marketsOnly: true },
+    { h: 'yahoofinance.com', name: 'Yahoo Finance', kind: 'stocks', marketsOnly: true },
+    { h: 'cnbc.com', name: 'CNBC', kind: 'stocks', marketsOnly: true },
+    { h: 'marketwatch.com', name: 'MarketWatch', kind: 'stocks', marketsOnly: true },
+    { h: 'fortune.com', name: 'Fortune', kind: 'stocks', marketsOnly: true },
   ];
   const OUTLET_BY_HANDLE = Object.fromEntries(OUTLETS.map((o) => [o.h, o]));
   const IMPERSONATED = /whale\s*alert|watcher\s*guru|decrypt|coindesk|cointelegraph|lookonchain|the\s*block|bitcoin\s*magazine/i;
   // Crowd posts must actually be about markets to get in (a "crypto" search also returns politics and AI takes).
   const CROWD_RE = /\$[A-Za-z]{2,}|\b(crypto|bitcoin|btc|eth|ethereum|solana|memecoins?|meme ?coins?|altcoins?|tokens?|defi|airdrops?|pump\.fun|dex|on-?chain|blockchain|nfts?|stablecoins?|usdc|usdt|binance|coinbase|hyperliquid|bull ?run|bear market|stocks?|nasdaq|s&p|earnings|trading|traders?|whales?|rug ?pull|degen|hodl)\b/i;
-  const MARKETS_RE = /\b(stock|stocks|shares|s&p|nasdaq|dow|fed|rates?|inflation|cpi|jobs report|earnings|treasur|yield|ipo|crypto|bitcoin|tariff|market|investors?|wall street|\$[A-Z]{1,5})\b/i;
+  // General newsrooms only get in with crypto stories or genuinely market-moving ones (not every "market" mention).
+  const MARKETS_RE = /\b(crypto|cryptocurrenc(y|ies)|bitcoin|btc|ether(eum)?|solana|xrp|dogecoin|stablecoins?|blockchain|memecoins?|meme stocks?|coinbase|binance|robinhood|tether|microstrategy|sec|etfs?|stocks?|shares (rose|fell|jumped|slid|surged|tumbled|sank|climbed|gained|dropped|soared|plunged)|s&p|nasdaq|dow jones|wall street|earnings|federal reserve|the fed|fed (cut|hike|holds?|chair)|rate cuts?|interest rates?|inflation|cpi|ipos?|treasury yields?|bond yields?|tariffs?|nvidia|tesla)\b|\$[A-Z]{1,5}\b/i;
 
+  // Crypto newsrooms. Most block direct browser reads, so they go through rss2json — which rate-limits
+  // registering many feeds at once, hence the staggered polling in start().
   const RSS = [
-    { url: 'https://www.coindesk.com/arc/outboundfeeds/rss/', name: 'CoinDesk', emoji: '📰' },
-    { url: 'https://www.theblock.co/rss.xml', name: 'The Block', emoji: '🧱' },
-    { url: 'https://cointelegraph.com/rss', name: 'Cointelegraph', emoji: '📡' },
+    { url: 'https://www.coindesk.com/arc/outboundfeeds/rss/', name: 'CoinDesk' },
+    { url: 'https://www.theblock.co/rss.xml', name: 'The Block' },
+    { url: 'https://cointelegraph.com/rss', name: 'Cointelegraph' },
+    { url: 'https://bitcoinmagazine.com/feed', name: 'Bitcoin Magazine' },
+    { url: 'https://cryptoslate.com/feed/', name: 'CryptoSlate' },
+    { url: 'https://thedefiant.io/api/feed', name: 'The Defiant' },
+    { url: 'https://unchainedcrypto.com/feed/', name: 'Unchained' },
   ];
+  // MarketWatch's own feed allows direct reads (CORS *), so it skips the converter.
+  const DIRECT_RSS = [{ url: 'https://feeds.content.dowjones.io/public/rss/mw_topstories', name: 'MarketWatch', h: 'marketwatch.com', kind: 'stocks' }];
 
   const BASE_QUERIES = ['memecoin', 'pump.fun', '$SOL', '$BTC', 'solana', 'altcoin', '$ETH', 'crypto'];
   const MASTO_TAGS = ['memecoin', 'crypto', 'bitcoin', 'solana', 'cryptocurrency'];
@@ -63,7 +78,9 @@
     const usd = p.text.match(/\(([\d,]+)\s*USD\)/);
     const m = p.text.match(/transferred from (.+?) to (.+?)(\s+https?:|\s+[a-z0-9-]+\.[a-z]{2,}\/|$)/i);
     const stable = STABLE.test(p.text);
-    const w = { usd: usd ? +usd[1].replace(/,/g, '') : null, flow: 'transfer', note: '' };
+    const asset = (p.text.match(/\$([A-Za-z0-9]{2,10})\b/) || [])[1];
+    const tidy = (x) => String(x || '').replace(/#/g, '').replace(/\s+/g, ' ').trim().replace(/^unknown wallet$/i, 'unknown wallet');
+    const w = { usd: usd ? +usd[1].replace(/,/g, '') : null, flow: 'transfer', note: '', asset: asset ? asset.toUpperCase() : '', from: m ? tidy(m[1]) : '', to: m ? tidy(m[2]) : '' };
     if (/\bminted\b/i.test(p.text)) {
       w.flow = 'mint';
       w.note = 'fresh stablecoins minted';
@@ -255,44 +272,63 @@
   }
 
   /* ---------------- newsroom RSS ---------------- */
-  async function pollRSS() {
+  function rssPost(r, it, host) {
+    const desc = strip(it.description || '').slice(0, 220);
+    const text = it.title + (desc && !desc.startsWith(it.title.slice(0, 30)) ? '\n' + desc : '');
+    return {
+      id: 'r:' + (it.guid || it.link),
+      src: 'rss',
+      outlet: { h: host, name: r.name, kind: r.kind || 'news' },
+      verified: 'outlet',
+      author: { name: r.name, handle: host, avatar: '' },
+      text,
+      link: it.link,
+      linkTitle: '',
+      img: it.thumbnail || '',
+      url: it.link,
+      ts: it.ts,
+      likes: 0,
+      reposts: 0,
+      replies: 0,
+      tickers: F.tickers(it.title + ' ' + desc),
+    };
+  }
+  async function pollOneRSS(r) {
     const added = [];
-    await Promise.all(
-      RSS.map(async (r) => {
-        try {
-          const d = await F.fetchJSON('https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(r.url));
-          if (d.status !== 'ok') throw new Error(d.message || 'feed error');
-          (d.items || []).forEach((it) => {
-            const desc = strip(it.description || '').slice(0, 220);
-            const text = it.title + (desc && !desc.startsWith(it.title.slice(0, 30)) ? '\n' + desc : '');
-            const p = {
-              id: 'r:' + (it.guid || it.link),
-              src: 'rss',
-              outlet: { h: new URL(r.url).hostname.replace(/^www\./, ''), name: r.name, kind: 'news', emoji: r.emoji },
-              verified: 'outlet',
-              author: { name: r.name, handle: new URL(r.url).hostname.replace(/^www\./, ''), avatar: '' },
-              text,
-              link: it.link,
-              linkTitle: '',
-              img: it.thumbnail || (it.enclosure && it.enclosure.link) || '',
-              url: it.link,
-              ts: Date.parse(String(it.pubDate).replace(' ', 'T') + 'Z'),
-              likes: 0,
-              reposts: 0,
-              replies: 0,
-              tickers: F.tickers(it.title + ' ' + desc),
-            };
-            if (add(p, false)) added.push(p);
-          });
-          F.health.ok('rss');
-        } catch (e) {
-          F.health.fail('rss', r.name + ': ' + e.message);
-        }
-      })
-    );
+    try {
+      const d = await F.fetchJSON('https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(r.url));
+      if (d.status !== 'ok') throw new Error(d.message || 'feed error');
+      const host = new URL(r.url).hostname.replace(/^www\./, '');
+      (d.items || []).forEach((it) => {
+        const p = rssPost(r, Object.assign({}, it, { thumbnail: it.thumbnail || (it.enclosure && it.enclosure.link), ts: Date.parse(String(it.pubDate).replace(' ', 'T') + 'Z') }), host);
+        if (add(p, false)) added.push(p);
+      });
+      F.health.ok('rss', r.name);
+    } catch (e) {
+      F.health.fail('rss', r.name + ': ' + e.message);
+    }
     commit(added);
   }
-
+  async function pollDirectRSS() {
+    for (const r of DIRECT_RSS) {
+      try {
+        const ctl = new AbortController();
+        const timer = setTimeout(() => ctl.abort(), 12000);
+        const xml = await fetch(r.url, { signal: ctl.signal }).then((x) => x.text()).finally(() => clearTimeout(timer));
+        const doc = new DOMParser().parseFromString(xml, 'text/xml');
+        const added = [];
+        [...doc.querySelectorAll('item')].slice(0, 15).forEach((n) => {
+          const g = (sel) => (n.querySelector(sel) || {}).textContent || '';
+          const it = { title: g('title').trim(), description: g('description'), link: g('link').trim(), guid: g('guid'), ts: Date.parse(g('pubDate')) };
+          const p = rssPost(r, it, r.h);
+          if (MARKETS_RE.test(p.text) && add(p, false)) added.push(p);
+        });
+        commit(added);
+      } catch (e) {
+        F.health.fail('rss', r.name + ': ' + e.message);
+      }
+    }
+  }
   function commit(added) {
     if (!added.length) return;
     reorder();
@@ -310,13 +346,18 @@
     score: (p) => (p.ai ? p.ai.sentiment : p.sent),
     start() {
       pollOutlets();
-      pollRSS();
-      setTimeout(pollCrowd, 2500);
-      setTimeout(pollMasto, 5000);
-      setInterval(pollOutlets, 90000);
-      setInterval(pollCrowd, 40000);
-      setInterval(pollMasto, 120000);
-      setInterval(pollRSS, 5 * 60000);
+      pollDirectRSS();
+      setTimeout(pollCrowd, 1500);
+      setTimeout(pollMasto, 3000);
+      // one newsroom every 6s at startup, then each refreshes every 4 min, staggered
+      RSS.forEach((r, i) => setTimeout(() => {
+        pollOneRSS(r);
+        setInterval(() => pollOneRSS(r), 4 * 60000);
+      }, 800 + i * 6000));
+      setInterval(pollOutlets, 30000);
+      setInterval(pollCrowd, 20000);
+      setInterval(pollMasto, 60000);
+      setInterval(pollDirectRSS, 3 * 60000);
     },
   };
 })();

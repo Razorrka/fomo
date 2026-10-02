@@ -99,7 +99,7 @@
         const s = stocks[u.name.replace('xyz:', '')];
         const x = ctxs[i];
         if (!s || !x || u.isDelisted) return;
-        s.price = +x.markPx;
+        if (Date.now() - (s.wsAt || 0) > 30000) s.price = +x.markPx; // the websocket owns the live price
         s.oracle = +x.oraclePx;
         s.prev = +x.prevDayPx;
         s.vol = +x.dayNtlVlm;
@@ -112,6 +112,52 @@
     } catch (e) {
       F.health.fail('hyperliquid', e);
     }
+  }
+
+  // Live stock prices: Hyperliquid pushes mid prices for the whole xyz stock-perp book over a websocket.
+  let hl, hlBack = 1000;
+  function connectHL() {
+    try {
+      hl = new WebSocket('wss://api.hyperliquid.xyz/ws');
+    } catch (e) {
+      return setTimeout(connectHL, hlBack);
+    }
+    hl.onopen = () => {
+      hlBack = 1000;
+      hl.send(JSON.stringify({ method: 'subscribe', subscription: { type: 'allMids', dex: 'xyz' } }));
+    };
+    hl.onmessage = (ev) => {
+      let m;
+      try {
+        m = JSON.parse(ev.data);
+      } catch (e) {
+        return;
+      }
+      if (m.channel !== 'allMids' || !m.data || !m.data.mids) return;
+      const now = Date.now();
+      for (const k in m.data.mids) {
+        const s = stocks[k.replace('xyz:', '')];
+        if (!s) continue;
+        const p = +m.data.mids[k];
+        s.wsAt = now;
+        if (p === s.price) continue;
+        const prev = s.price;
+        s.price = p;
+        s.at = now;
+        if (!s.hist.length || now - s.hist[s.hist.length - 1][0] > 15000) {
+          s.hist.push([now, p]);
+          if (s.hist.length > 240) s.hist.shift();
+        }
+        F.emit('stocktick', { sym: s.sym, price: p, prev });
+      }
+      F.health.ok('hyperliquid', 'live stream');
+    };
+    hl.onclose = () => setTimeout(connectHL, (hlBack = Math.min(hlBack * 2, 30000)));
+    hl.onerror = () => {
+      try {
+        hl.close();
+      } catch (e) {}
+    };
   }
 
   /* ---------------- NYSE session (with the 2026–27 holiday calendar) ---------------- */
@@ -170,9 +216,10 @@
       snapshot();
       connectWS();
       pollStocks();
+      connectHL();
       pollFng();
       pollGlobal();
-      setInterval(pollStocks, 15000);
+      setInterval(pollStocks, 30000);
       setInterval(pollFng, 30 * 60000);
       setInterval(pollGlobal, 5 * 60000);
       setInterval(() => {

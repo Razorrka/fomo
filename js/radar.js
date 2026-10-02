@@ -144,6 +144,7 @@
       );
     } finally {
       refreshing = false;
+      F.radar.lastRefresh = Date.now();
       finish();
     }
   }
@@ -292,9 +293,10 @@
     start() {
       pollGT();
       pollBoosts();
-      setInterval(pollGT, 90000);
-      setInterval(pollBoosts, 120000);
-      setInterval(refreshDS, 20000);
+      setInterval(pollGT, 60000);
+      setInterval(pollBoosts, 90000);
+      setInterval(refreshDS, 8000); // DexScreener allows 300 req/min on this endpoint; ~4 batches every 8s
+      F.radar.lastRefresh = 0;
     },
   };
 })();

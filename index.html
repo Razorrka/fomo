@@ -55,6 +55,7 @@
     </div>
     <div class="meta" id="feedMeta">Connecting…</div>
     <div class="ftick" id="feedTicker" hidden></div>
+    <button class="newpill" id="newPill" type="button" hidden></button>
     <div class="feed-list" id="feedList"></div>
   </section>
 
@@ -111,6 +112,13 @@
         <button data-p="send" type="button">Full send 🚀</button>
       </div>
       <p class="fine" id="botRiskNote"></p>
+      <div class="amt">
+        <div class="amt-h"><span>Starting balance</span><b id="botBank">$1,000.00</b></div>
+        <div class="amt-in"><span>$</span><input id="bankIn" type="text" inputmode="decimal" placeholder="Enter any amount" autocomplete="off"><button id="bankSet" class="btn sm" type="button">Set</button></div>
+        <div class="quick" id="bankQuick"><button data-v="10" type="button">$10</button><button data-v="100" type="button">$100</button><button data-v="500" type="button">$500</button><button data-v="1000" type="button">$1000</button></div>
+        <div class="amt-h"><span>Per trade</span><div class="mini-seg" id="sizeMode"><button data-m="auto" type="button">Auto %</button><button data-m="fixed" type="button">Fixed $</button></div></div>
+        <div class="amt-in" id="sizeFixedRow" hidden><span>$</span><input id="sizeIn" type="text" inputmode="decimal" placeholder="Amount per trade" autocomplete="off"></div>
+      </div>
       <button id="botRun" class="btn big go" type="button">Start bot</button>
       <div class="row2">
         <button id="botPanic" class="btn ghost" type="button">Sell all</button>
