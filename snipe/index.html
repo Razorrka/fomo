@@ -21,6 +21,7 @@
       --green: #3ee08f;
       --blue: #7aa2ff;
       --chip: #1b1c26;
+      --orange: #ffb070;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body {
@@ -78,20 +79,96 @@
       letter-spacing: 0.2em;
     }
     #snipe:disabled { cursor: wait; }
+    #lowmc {
+      display: flex;
+      width: 100%;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 10px;
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      color: var(--text);
+      border-radius: 16px;
+      padding: 12px 16px;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      font-size: 14px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+    }
+    #lowmc .lowmc-copy { text-align: left; }
+    #lowmc .lowmc-kicker {
+      display: block;
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+    #lowmc.on {
+      border-color: var(--lime);
+      background: #14180c;
+      color: var(--lime);
+      box-shadow: 0 0 0 1px rgba(200, 255, 61, 0.2);
+    }
+    #lowmc.on .lowmc-kicker { color: #b6d56a; }
+    .switch {
+      width: 46px;
+      height: 28px;
+      border-radius: 999px;
+      background: #2a2b33;
+      position: relative;
+      flex: 0 0 46px;
+      transition: background 0.15s ease;
+    }
+    #lowmc.on .switch { background: var(--lime); }
+    .knob {
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #f4f4f7;
+      transition: transform 0.15s ease, background 0.15s ease;
+    }
+    #lowmc.on .knob { transform: translateX(18px); background: #0a0b08; }
     #status {
       text-align: center;
       color: var(--muted);
       font-size: 12px;
       min-height: 18px;
       margin: 12px 0 16px;
+      line-height: 1.45;
     }
     #status.err { color: var(--red); }
+    .pulse {
+      display: inline-block;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--lime);
+      margin-right: 6px;
+      vertical-align: middle;
+      animation: pulse 1.2s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
     #picks { display: flex; flex-direction: column; gap: 12px; }
     .card {
       background: var(--card);
       border: 1px solid var(--card-border);
       border-radius: 18px;
       padding: 14px 14px 12px;
+    }
+    .card.new-hit {
+      border-color: var(--lime);
+      box-shadow: 0 0 0 1px rgba(200, 255, 61, 0.28), 0 8px 28px rgba(200, 255, 61, 0.08);
     }
     .card-top {
       display: flex;
@@ -124,6 +201,26 @@
       color: #b4b4c2;
       line-height: 1.4;
     }
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-top: 7px;
+    }
+    .tag {
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 3px 7px;
+      border-radius: 999px;
+      background: var(--chip);
+      color: #c5c5d4;
+    }
+    .tag.bonding { background: #2a1a10; color: var(--orange); }
+    .tag.fresh { background: #10261c; color: var(--green); }
+    .tag.narrative { background: #1a2240; color: var(--blue); }
+    .tag.new { background: #1c2610; color: var(--lime); }
     .score {
       margin-left: auto;
       background: #1c2610;
@@ -214,6 +311,13 @@
   </header>
 
   <button id="snipe" type="button">SNIPE</button>
+  <button id="lowmc" type="button" aria-pressed="false">
+    <span class="lowmc-copy">
+      LOW MC
+      <span class="lowmc-kicker">Off · tap to auto-scan fresh narratives</span>
+    </span>
+    <span class="switch" aria-hidden="true"><span class="knob"></span></span>
+  </button>
   <p id="status">Tap SNIPE to scan live DexScreener data.</p>
   <div id="picks"></div>
   <footer>Not financial advice. Data from DexScreener.</footer>
@@ -229,12 +333,32 @@
       const MIN_TXNS_H1 = 10;
       const TOP_N = 8;
       const BATCH = 30;
+      const LOW_MC_KEY = "snipe.lowMc";
+      const LOW_MC_EVERY_MS = 20000;
+      const LOW_MAX_AGE_MS = 6 * 60 * 60 * 1000;
+      const LOW_PREF_AGE_MS = 2 * 60 * 60 * 1000;
+      const LOW_MAX_MCAP = 300000;
+      const LOW_MIN_MCAP = 5000;
+      const LOW_MIN_MCAP_BONDING = 1000;
+      const LOW_MIN_LIQ = 1000;
+      const SEARCH_QUERIES = ["pump", "solana", "pumpfun"];
 
       const $btn = document.getElementById("snipe");
+      const $low = document.getElementById("lowmc");
       const $status = document.getElementById("status");
       const $picks = document.getElementById("picks");
       const $toast = document.getElementById("toast");
       let toastTimer = null;
+      let lowMcOn = false;
+      let scanning = false;
+      let countdownTimer = null;
+      let nextScanAt = 0;
+      let lastScanLabel = "";
+      let lastScanHadError = false;
+      let lastPickCount = 0;
+      let primedMints = false;
+      let seenMints = {};
+      let statusOverride = null;
 
       function clamp(n, lo, hi) {
         return Math.min(hi, Math.max(lo, n));
@@ -277,6 +401,31 @@
         });
         return { order: order, meta: map };
       }
+      function ingestSearchPairs(collected, pairs) {
+        const extra = [];
+        (pairs || []).forEach(function (p) {
+          if (!p || String(p.chainId || "").toLowerCase() !== "solana") return;
+          const addr = p.baseToken && p.baseToken.address;
+          if (!addr) return;
+          if (!collected.meta[addr]) {
+            collected.order.push(addr);
+            collected.meta[addr] = { desc: "", links: [], boost: 0, icon: "" };
+          }
+          const info = p.info || {};
+          const meta = collected.meta[addr];
+          if (info.imageUrl && !meta.icon) meta.icon = info.imageUrl;
+          const links = [];
+          (info.websites || []).forEach(function (w) {
+            links.push({ type: "website", label: "Website", url: w.url || w });
+          });
+          (info.socials || []).forEach(function (s) {
+            links.push({ type: s.type || "social", label: s.type || "social", url: s.url });
+          });
+          if (links.length && !(meta.links && meta.links.length)) meta.links = links;
+          extra.push(p);
+        });
+        return extra;
+      }
       function chunk(arr, size) {
         const out = [];
         for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
@@ -307,6 +456,13 @@
         });
         return byMint;
       }
+      function isBonding(p) {
+        const dex = String((p && p.dexId) || "").toLowerCase();
+        if (dex === "pumpfun") return true;
+        const mint = String((p && p.baseToken && p.baseToken.address) || "");
+        const liq = p && p.liquidity && Number.isFinite(Number(p.liquidity.usd)) ? num(p.liquidity.usd) : 0;
+        return dex !== "pumpswap" && dex !== "raydium" && mint.toLowerCase().endsWith("pump") && liq <= 0;
+      }
       function isEarly(p) {
         const liq = p.liquidity && num(p.liquidity.usd);
         const mcap = num(p.marketCap) || num(p.fdv);
@@ -319,6 +475,26 @@
         if (!(liq >= MIN_LIQ)) return false;
         if (!(mcap > 0 && mcap <= MAX_MCAP)) return false;
         if (vol1h < MIN_VOL_H1 && txns < MIN_TXNS_H1) return false;
+        return true;
+      }
+      function isLowMc(p) {
+        const bonding = isBonding(p);
+        const mcap = num(p.marketCap) || num(p.fdv);
+        const created = num(p.pairCreatedAt);
+        const age = created ? Date.now() - created : Infinity;
+        const vol5 = (p.volume && num(p.volume.m5)) || 0;
+        const vol1h = (p.volume && num(p.volume.h1)) || 0;
+        const tx5 = (p.txns && p.txns.m5) || {};
+        const tx1 = (p.txns && p.txns.h1) || {};
+        const txns5 = num(tx5.buys) + num(tx5.sells);
+        const txns1 = num(tx1.buys) + num(tx1.sells);
+        if (age > LOW_MAX_AGE_MS) return false;
+        if (!(mcap > 0 && mcap <= LOW_MAX_MCAP)) return false;
+        if (mcap < (bonding ? LOW_MIN_MCAP_BONDING : LOW_MIN_MCAP)) return false;
+        const hasLiq = p.liquidity && Number.isFinite(Number(p.liquidity.usd));
+        if (!bonding && hasLiq && !(num(p.liquidity.usd) >= LOW_MIN_LIQ)) return false;
+        if (!bonding && !hasLiq) return false;
+        if (vol5 < 100 && vol1h < 500 && txns5 < 5 && txns1 < 10) return false;
         return true;
       }
       function socialFlags(links) {
@@ -336,6 +512,11 @@
           return t === "telegram" || t === "discord" || /t\.me|discord/i.test(l.url || "");
         });
         return { website: website, twitter: twitter, other: other };
+      }
+      function hasNarrative(meta) {
+        const desc = String((meta && meta.desc) || "").trim();
+        const flags = socialFlags(meta && meta.links);
+        return !!(desc || flags.website || flags.twitter || flags.other);
       }
       function scorePick(p, meta) {
         const chg5 = num(p.priceChange && p.priceChange.m5);
@@ -356,6 +537,38 @@
         const flags = socialFlags(meta && meta.links);
         const sSocial = (flags.website ? 5 : 0) + (flags.twitter ? 3 : 0) + (flags.other ? 2 : 0);
         return Math.round(s5 + s1 + sVol + sBs + sBoost + sSocial);
+      }
+      function scoreLowMc(p, meta) {
+        const mcap = Math.max(num(p.marketCap) || num(p.fdv), 1);
+        const vol5 = num(p.volume && p.volume.m5);
+        const vol1 = num(p.volume && p.volume.h1);
+        const sVol = clamp((vol5 / mcap) * 40, 0, 20) + clamp((vol1 / mcap) * 20, 0, 15);
+        const tx5 = (p.txns && p.txns.m5) || {};
+        const tx1 = (p.txns && p.txns.h1) || {};
+        const buys5 = num(tx5.buys);
+        const sells5 = num(tx5.sells);
+        const buys1 = num(tx1.buys);
+        const sells1 = num(tx1.sells);
+        const ratio5 = sells5 > 0 ? buys5 / sells5 : (buys5 > 0 ? 3 : 1);
+        const ratio1 = sells1 > 0 ? buys1 / sells1 : (buys1 > 0 ? 3 : 1);
+        const sBs = clamp((ratio5 - 1) / 1.5 * 15, 0, 15) + clamp((ratio1 - 1) / 1.5 * 8, 0, 8);
+        const sTxn = clamp((buys5 + sells5) / 80 * 15, 0, 15);
+        const chg5 = num(p.priceChange && p.priceChange.m5);
+        const chg1 = num(p.priceChange && p.priceChange.h1);
+        let sChg = 0;
+        if (chg5 > 0) sChg += clamp(chg5 / 80 * 10, 0, 10);
+        else sChg += clamp(chg5 / 40 * 5, -8, 0);
+        if (chg1 > 500) sChg -= clamp((chg1 - 500) / 500 * 15, 0, 15);
+        else if (chg1 > 0) sChg += clamp(chg1 / 200 * 10, 0, 10);
+        else sChg += clamp(chg1 / 50 * 5, -8, 0);
+        const age = Date.now() - num(p.pairCreatedAt);
+        const sAge = age < 60 * 60 * 1000 ? 12 : age < LOW_PREF_AGE_MS ? 8 : age < 4 * 60 * 60 * 1000 ? 4 : 0;
+        const sBond = isBonding(p) ? 5 : 0;
+        const boost = num(meta && meta.boost);
+        const sBoost = clamp((Math.log(boost + 1) / Math.log(501)) * 8, 0, 8);
+        const flags = socialFlags(meta && meta.links);
+        const sSocial = (flags.website ? 5 : 0) + (flags.twitter ? 3 : 0) + (flags.other ? 2 : 0) + (String((meta && meta.desc) || "").trim() ? 4 : 0);
+        return Math.round(sVol + sBs + sTxn + sChg + sAge + sBond + sBoost + sSocial);
       }
       function fmtUsd(n) {
         if (!Number.isFinite(n) || n <= 0) return "—";
@@ -382,6 +595,17 @@
         if (!t) return "No profile description.";
         return t.length > max ? t.slice(0, max - 1).trim() + "…" : t;
       }
+      function narrativeText(p, meta) {
+        if (meta && meta.desc) return truncate(meta.desc, 110);
+        const flags = socialFlags(meta && meta.links);
+        const bits = [];
+        if (isBonding(p)) bits.push("Bonding-curve token with little history.");
+        else if (/pumpswap|raydium/i.test(String(p.dexId || ""))) bits.push("Fresh migration with early numbers.");
+        else bits.push("New Solana token, thin history.");
+        const links = [flags.website && "website", flags.twitter && "X", flags.other && "community"].filter(Boolean);
+        if (links.length) bits.push(links.join(" + "));
+        return bits.join(" · ");
+      }
       function escapeHtml(s) {
         return String(s)
           .replace(/&/g, "&amp;")
@@ -392,6 +616,23 @@
       function pctClass(n) {
         if (!Number.isFinite(n)) return "";
         return n >= 0 ? "pos" : "neg";
+      }
+      function stampNow() {
+        return new Date().toLocaleString("en-US", {
+          timeZone: "America/New_York",
+          hour: "numeric",
+          minute: "2-digit",
+          month: "short",
+          day: "numeric"
+        }) + " ET";
+      }
+      function readLowMc() {
+        try { return localStorage.getItem(LOW_MC_KEY) === "1"; }
+        catch (e) { return false; }
+      }
+      function writeLowMc(on) {
+        try { localStorage.setItem(LOW_MC_KEY, on ? "1" : "0"); }
+        catch (e) {}
       }
       function toast(msg) {
         $toast.textContent = msg;
@@ -413,15 +654,77 @@
           document.body.removeChild(ta);
         }
       }
-      function render(picks, scannedAt) {
+      function paintToggle() {
+        $low.classList.toggle("on", lowMcOn);
+        $low.setAttribute("aria-pressed", lowMcOn ? "true" : "false");
+        $low.querySelector(".lowmc-kicker").textContent = lowMcOn
+          ? "On · auto-scanning new narratives & bonding tokens"
+          : "Off · tap to auto-scan fresh narratives";
+      }
+      function remainingSec() {
+        return Math.max(0, Math.ceil((nextScanAt - Date.now()) / 1000));
+      }
+      function setStatus(text, isErr) {
+        statusOverride = text;
+        $status.className = isErr ? "err" : "";
+        $status.innerHTML = text;
+      }
+      function refreshStatus() {
+        if (!lowMcOn) return;
+        if (scanning) {
+          $status.className = "";
+          $status.innerHTML = '<span class="pulse"></span>LOW MC scanning…' + (lastScanLabel ? " last scan " + lastScanLabel : "");
+          return;
+        }
+        const next = remainingSec();
+        if (lastScanHadError) {
+          $status.className = "err";
+          $status.innerHTML = '<span class="pulse"></span>LOW MC couldn\'t reach DexScreener · retrying in ' + next + "s";
+          return;
+        }
+        $status.className = "";
+        if (!lastScanLabel) {
+          $status.innerHTML = '<span class="pulse"></span>LOW MC live · starting scan…';
+          return;
+        }
+        const empty = lastPickCount === 0
+          ? "nothing passing filters right now"
+          : lastPickCount + " pick" + (lastPickCount === 1 ? "" : "s");
+        $status.innerHTML = '<span class="pulse"></span>LOW MC scanning… next in ' + next + "s · last scan " + lastScanLabel + " · " + empty;
+      }
+      function stopLoop() {
+        if (countdownTimer) {
+          clearInterval(countdownTimer);
+          countdownTimer = null;
+        }
+      }
+      function startLoop() {
+        stopLoop();
+        nextScanAt = Date.now() + LOW_MC_EVERY_MS;
+        countdownTimer = setInterval(function () {
+          if (!lowMcOn) return;
+          if (!scanning && Date.now() >= nextScanAt) {
+            nextScanAt = Date.now() + LOW_MC_EVERY_MS;
+            scan({ auto: true });
+            return;
+          }
+          if (!scanning && !statusOverride) refreshStatus();
+        }, 250);
+      }
+      function render(picks, scannedAt, opts) {
+        opts = opts || {};
+        const low = !!opts.lowMc;
         if (!picks.length) {
           $picks.innerHTML = "";
+          if (low) return;
           $status.className = "err";
           $status.textContent = "No early Solana coins cleared the filters (under 24h, $10k+ liq, under $5M mcap, real volume). Tap SNIPE to retry.";
           return;
         }
-        $status.className = "";
-        $status.textContent = "Scan " + scannedAt + " · " + picks.length + " pick" + (picks.length === 1 ? "" : "s");
+        if (!low) {
+          $status.className = "";
+          $status.textContent = "Scan " + scannedAt + " · " + picks.length + " pick" + (picks.length === 1 ? "" : "s");
+        }
         $picks.innerHTML = picks.map(function (pick, i) {
           const p = pick.pair;
           const meta = pick.meta || {};
@@ -431,29 +734,38 @@
           const sym = rawSym.replace(/^\$+/, "");
           const chg5 = p.priceChange && Number(p.priceChange.m5);
           const chg1 = p.priceChange && Number(p.priceChange.h1);
-          const tx = (p.txns && p.txns.h1) || {};
-          const buys = num(tx.buys);
-          const sells = num(tx.sells);
+          const txSrc = low ? ((p.txns && p.txns.m5) || (p.txns && p.txns.h1) || {}) : ((p.txns && p.txns.h1) || {});
+          const buys = num(txSrc.buys);
+          const sells = num(txSrc.sells);
           const age = Date.now() - num(p.pairCreatedAt);
           const fomo = "https://fomo.family/tokens/solana/" + encodeURIComponent(mint);
           const dex = p.url || ("https://dexscreener.com/solana/" + mint);
+          const chips = [];
+          if (pick.isNew) chips.push('<span class="tag new">NEW</span>');
+          if (isBonding(p)) chips.push('<span class="tag bonding">BONDING</span>');
+          if (age < 60 * 60 * 1000) chips.push('<span class="tag fresh">NEW &lt;1h</span>');
+          if (hasNarrative(meta)) chips.push('<span class="tag narrative">NARRATIVE</span>');
+          const chipHtml = chips.length ? '<div class="chips">' + chips.join("") + "</div>" : "";
+          const line = low ? narrativeText(p, meta) : truncate(meta.desc, 110);
+          const bsLabel = low ? "5m buys / sells" : "Buys / sells";
           return (
-            '<article class="card">' +
+            '<article class="card' + (pick.isNew ? " new-hit" : "") + '">' +
               '<div class="card-top">' +
                 '<div class="rank">' + (i + 1) + '</div>' +
                 '<div class="ident">' +
                   '<div class="name-row"><span class="name">' + escapeHtml(name) + '</span><span class="sym">$' + escapeHtml(sym) + '</span></div>' +
-                  '<p class="narrative">' + escapeHtml(truncate(meta.desc, 110)) + '</p>' +
+                  '<p class="narrative">' + escapeHtml(line) + '</p>' +
+                  chipHtml +
                 '</div>' +
                 '<div class="score">' + pick.score + '</div>' +
               '</div>' +
               '<div class="stats">' +
                 '<div class="stat"><span class="k">Mcap</span><span class="v">' + fmtUsd(num(p.marketCap) || num(p.fdv)) + '</span></div>' +
                 '<div class="stat"><span class="k">Liquidity</span><span class="v">' + fmtUsd(num(p.liquidity && p.liquidity.usd)) + '</span></div>' +
-                '<div class="stat"><span class="k">1h vol</span><span class="v">' + fmtUsd(num(p.volume && p.volume.h1)) + '</span></div>' +
+                '<div class="stat"><span class="k">' + (low ? "5m / 1h vol" : "1h vol") + '</span><span class="v">' + (low ? fmtUsd(num(p.volume && p.volume.m5)) + " / " + fmtUsd(num(p.volume && p.volume.h1)) : fmtUsd(num(p.volume && p.volume.h1))) + '</span></div>' +
                 '<div class="stat"><span class="k">5m</span><span class="v ' + pctClass(chg5) + '">' + fmtPct(chg5) + '</span></div>' +
                 '<div class="stat"><span class="k">1h</span><span class="v ' + pctClass(chg1) + '">' + fmtPct(chg1) + '</span></div>' +
-                '<div class="stat"><span class="k">Buys / sells</span><span class="v">' + buys + " / " + sells + '</span></div>' +
+                '<div class="stat"><span class="k">' + bsLabel + '</span><span class="v">' + buys + " / " + sells + '</span></div>' +
                 '<div class="stat"><span class="k">Age</span><span class="v">' + fmtAge(age) + '</span></div>' +
                 '<div class="stat"><span class="k">Score</span><span class="v">' + pick.score + '</span></div>' +
                 '<div class="stat"><span class="k">Boost</span><span class="v">' + (meta.boost ? meta.boost : "—") + '</span></div>' +
@@ -470,47 +782,139 @@
           btn.addEventListener("click", function () { copyCa(btn.getAttribute("data-ca")); });
         });
       }
-      async function scan() {
+      async function scan(opts) {
+        opts = opts || {};
+        if (scanning) return;
+        scanning = true;
+        const useLow = !!lowMcOn;
+        statusOverride = null;
         $btn.disabled = true;
         $btn.classList.add("busy");
         $btn.textContent = "SCANNING";
-        $status.className = "";
-        $status.textContent = "Pulling live DexScreener profiles, boosts, and pair stats…";
+        if (useLow) refreshStatus();
+        else {
+          $status.className = "";
+          $status.textContent = "Pulling live DexScreener profiles, boosts, and pair stats…";
+        }
         try {
-          const results = await Promise.allSettled([
+          const jobs = [
             getJson(DS + "/token-profiles/latest/v1"),
-            getJson(DS + "/token-boosts/latest/v1"),
-            getJson(DS + "/token-boosts/top/v1")
-          ]);
-          const lists = results
-            .filter(function (r) { return r.status === "fulfilled"; })
-            .map(function (r) { return r.value; });
-          if (!lists.length) throw new Error("All DexScreener discovery endpoints failed");
+            getJson(DS + "/token-boosts/latest/v1")
+          ];
+          if (!useLow) jobs.push(getJson(DS + "/token-boosts/top/v1"));
+          else {
+            SEARCH_QUERIES.forEach(function (q) {
+              jobs.push(getJson(DS + "/latest/dex/search?q=" + encodeURIComponent(q)));
+            });
+          }
+          const results = await Promise.allSettled(jobs);
+          const lists = [];
+          const searchPairs = [];
+          results.forEach(function (r, i) {
+            if (r.status !== "fulfilled") return;
+            if (useLow && i >= 2) {
+              if (r.value && Array.isArray(r.value.pairs)) searchPairs.push.apply(searchPairs, r.value.pairs);
+            } else {
+              lists.push(r.value);
+            }
+          });
+          if (!lists.length && !searchPairs.length) throw new Error("All DexScreener discovery endpoints failed");
           const collected = collectAddresses(lists);
+          const extraPairs = ingestSearchPairs(collected, searchPairs);
           if (!collected.order.length) throw new Error("No Solana tokens in the live feed");
           const pairs = await fetchPairs(collected.order);
-          const byMint = bestPair(pairs);
+          const byMint = bestPair(pairs.concat(extraPairs));
+          const filterFn = useLow ? isLowMc : isEarly;
+          const scoreFn = useLow ? scoreLowMc : scorePick;
           const picks = collected.order.map(function (addr) {
             const p = byMint[addr] || byMint[Object.keys(byMint).find(function (k) { return k.toLowerCase() === addr.toLowerCase(); })];
-            if (!p || !isEarly(p)) return null;
-            return { pair: p, meta: collected.meta[addr] || {}, score: scorePick(p, collected.meta[addr] || {}) };
+            if (!p || !filterFn(p)) return null;
+            return { pair: p, meta: collected.meta[addr] || {}, score: scoreFn(p, collected.meta[addr] || {}) };
           }).filter(Boolean).sort(function (a, b) { return b.score - a.score; }).slice(0, TOP_N);
-          const now = new Date();
-          const stamp = now.toLocaleString("en-US", { timeZone: "America/New_York", hour: "numeric", minute: "2-digit", month: "short", day: "numeric" }) + " ET";
-          render(picks, stamp);
+
+          let newCount = 0;
+          if (useLow) {
+            picks.forEach(function (pick) {
+              const mint = pick.pair.baseToken.address;
+              pick.isNew = primedMints && !seenMints[mint];
+              if (pick.isNew) newCount += 1;
+            });
+            const nextSeen = {};
+            picks.forEach(function (pick) { nextSeen[pick.pair.baseToken.address] = true; });
+            seenMints = nextSeen;
+            primedMints = true;
+            if (newCount && navigator.vibrate) {
+              try { navigator.vibrate([40, 50, 40]); } catch (e) {}
+            }
+          }
+
+          const stamp = stampNow();
+          lastScanLabel = stamp;
+          lastScanHadError = false;
+          lastPickCount = picks.length;
+          render(picks, stamp, { lowMc: useLow });
+          statusOverride = null;
+          if (useLow) refreshStatus();
         } catch (err) {
-          $picks.innerHTML = "";
-          $status.className = "err";
-          $status.textContent = "Couldn't reach DexScreener. Check your connection and tap SNIPE to retry.";
+          lastScanHadError = true;
+          lastScanLabel = lastScanLabel || stampNow();
+          if (!useLow) {
+            $picks.innerHTML = "";
+            $status.className = "err";
+            $status.textContent = "Couldn't reach DexScreener. Check your connection and tap SNIPE to retry.";
+          } else {
+            statusOverride = null;
+            refreshStatus();
+          }
           console.error(err);
         } finally {
+          scanning = false;
           $btn.disabled = false;
           $btn.classList.remove("busy");
           $btn.textContent = "SNIPE";
+          if (useLow && lowMcOn) {
+            nextScanAt = Date.now() + LOW_MC_EVERY_MS;
+            if (!statusOverride) refreshStatus();
+          }
         }
       }
-      $btn.addEventListener("click", scan);
-      window.__snipe = { scan: scan, scorePick: scorePick, isEarly: isEarly };
+      function setLowMc(on, opts) {
+        opts = opts || {};
+        lowMcOn = !!on;
+        writeLowMc(lowMcOn);
+        paintToggle();
+        if (lowMcOn) {
+          primedMints = false;
+          seenMints = {};
+          lastScanHadError = false;
+          startLoop();
+          if (!opts.skipScan) scan({ auto: false });
+        } else {
+          stopLoop();
+          statusOverride = null;
+          if ($picks.children.length) {
+            $status.className = "";
+            $status.textContent = "LOW MC off. Tap SNIPE for a regular early-coin scan.";
+          } else {
+            $status.className = "";
+            $status.textContent = "Tap SNIPE to scan live DexScreener data.";
+          }
+        }
+      }
+
+      $btn.addEventListener("click", function () { scan({ auto: false }); });
+      $low.addEventListener("click", function () { setLowMc(!lowMcOn); });
+      if (readLowMc()) setLowMc(true);
+      else paintToggle();
+      window.__snipe = {
+        scan: scan,
+        scorePick: scorePick,
+        scoreLowMc: scoreLowMc,
+        isEarly: isEarly,
+        isLowMc: isLowMc,
+        isBonding: isBonding,
+        setLowMc: setLowMc
+      };
     })();
   </script>
 </body>
