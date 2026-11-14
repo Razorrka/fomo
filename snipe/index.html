@@ -303,6 +303,9 @@
     }
     .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
     /* ---- mode bar + race/data views ---- */
+    .engine-line { font-size: 12px; margin: 4px 0 6px; color: #9a9a9a; }
+    .engine-line.ok { color: #c8ff3d; }
+    .engine-line.warn { color: #ffb347; }
     .modebar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 14px; position: sticky; top: env(safe-area-inset-top); z-index: 10; background: var(--bg); padding: 6px 0; }
     .modebar button { border: 1px solid var(--card-border); background: var(--card); color: var(--muted); border-radius: 12px; padding: 10px 4px; font-size: 12px; font-weight: 800; letter-spacing: 0.06em; cursor: pointer; }
     .modebar button.on { color: #0a0b08; background: var(--lime); border-color: var(--lime); }
@@ -416,7 +419,8 @@
   <section class="view" id="view-race" hidden>
     <div class="panel form" id="race-setup">
       <h2>Race 🫗 — set it up</h2>
-      <p class="sub" style="margin-bottom:6px">You trade in fomo. 🫗 paper trades right here on this page. Whoever's further ahead at the buzzer, or first to the goal, wins.</p>
+      <p class="sub" style="margin-bottom:6px">You trade in fomo. 🫗 paper trades on its own server. Whoever's further ahead at the buzzer, or first to the goal, wins.</p>
+      <p class="engine-line" id="r-engine">Checking 🫗's server…</p>
       <div class="row">
         <div><label for="r-budget">Budget $</label><input id="r-budget" type="number" inputmode="decimal" placeholder="18" /></div>
         <div><label for="r-goal">Goal $</label><input id="r-goal" type="number" inputmode="decimal" placeholder="40" /></div>
@@ -461,6 +465,7 @@
       <div class="panel feed-panel">
         <h2>Live 🫗 activity</h2>
         <div class="feed-status" id="rb-status"><span class="pulse"></span>Starting…</div>
+        <p class="engine-line" id="rb-engine"></p>
         <p class="gap-note" id="rb-gap" hidden></p>
         <ul class="feed" id="rb-feed"></ul>
       </div>
@@ -471,7 +476,7 @@
 
       <button type="button" class="btn-stop" id="r-stop">STOP RACE</button>
       <button type="button" class="btn-start" id="r-new" hidden>NEW RACE</button>
-      <p class="sub center" style="margin-top:10px">Paper trades with 4% slippage + 1% fee each way. 🫗 only trades while this page is open. If you close it, 🫗 pauses, and when you come back it reprices everything and shows the gap.</p>
+      <p class="sub center" style="margin-top:10px" id="rb-foot">Paper trades with 4% slippage + 1% fee each way.</p>
     </div>
   </section>
 
@@ -1202,7 +1207,39 @@
       const WSOL = "So11111111111111111111111111111111111111112";
       const RULES = { slip: 0.04, fee: 0.01, maxOpen: 4, size: { 1: 0.10, 2: 0.15, 3: 0.20, 4: 0.25, 5: 0.30 }, stop: -0.30, tp: 1.0, trailArm: 0.5, trailDrop: 0.25, maxHoldMin: 90,
         tickMs: 12000, scanMs: 24000, maxEntriesPerScan: 1, minConv: 3, skipCooldownMin: 10, rugMisses: 3, walletMs: 60000 };
-      const R = { st: null, busy: false, lastScanAt: 0, nextTickAt: 0, timer: null, netErr: 0, walletBusy: false, lastWalletAt: 0, uiBuilt: false };
+      const R = { st: null, busy: false, lastScanAt: 0, nextTickAt: 0, timer: null, netErr: 0, walletBusy: false, lastWalletAt: 0, uiBuilt: false,
+        mode: "local", box: { alive: false, hb: 0, hbSeenAt: 0, meta: null, err: "", checked: false, nextAtLocal: 0 }, pending: null, done: [] };
+      // ---- server sync: the box runs this same page headless with ?engine=box and trades 24/7 ----
+      const SYNC_CMD = "https://textdb.dev/api/data/abc07ea1-1c98-4893-96be-820d279ac746";
+      const SYNC_STATE = "https://textdb.dev/api/data/5e99d746-38bf-40e6-839c-d94afa2e9f62";
+      const ENGINE = /[?&]engine=box\b/.test(location.search);
+      const KEY_REMOTE = "snipe.race.remote";
+      const BOX_STALE_MS = 150000;
+      R.mode = ENGINE ? "engine" : "local";
+      async function syncGet(url) {
+        const ctl = new AbortController(); const to = setTimeout(() => ctl.abort(), 9000);
+        try {
+          const r = await fetch(url + "?t=" + Date.now(), { cache: "no-store", signal: ctl.signal });
+          if (!r.ok) throw new Error("HTTP " + r.status);
+          const t = (await r.text()).trim();
+          return t ? JSON.parse(t) : null;
+        } finally { clearTimeout(to); }
+      }
+      async function syncPut(url, obj) {
+        const ctl = new AbortController(); const to = setTimeout(() => ctl.abort(), 12000);
+        try {
+          const r = await fetch(url, { method: "POST", headers: { "Content-Type": "text/plain" }, body: JSON.stringify(obj), signal: ctl.signal });
+          if (!r.ok) throw new Error("HTTP " + r.status);
+        } finally { clearTimeout(to); }
+      }
+      function thin(arr, max) { if (!arr || arr.length <= max) return arr || []; const step = arr.length / max, out = []; for (let i = 0; i < max - 1; i++) out.push(arr[Math.floor(i * step)]); out.push(arr[arr.length - 1]); return out; }
+      function compact(st) {
+        if (!st) return null;
+        const c = Object.assign({}, st);
+        c.feed = st.feed.slice(0, 40); c.skipped = st.skipped.slice(0, 12); c.equity = thin(st.equity, 240); c.traded = st.traded.slice(-300); c.closed = st.closed.slice(-150);
+        c.user = Object.assign({}, st.user, { hist: thin(st.user.hist, 240) });
+        return c;
+      }
       window.__race = R;
 
       function save() { try { localStorage.setItem(KEY, JSON.stringify(R.st)); } catch (e) {} }
@@ -1346,8 +1383,9 @@
         R.st = { id: "r" + now, status: "running", budget, goal, start: now, end: now + durMs, cash: budget, open: [], closed: [], skipped: [], traded: [], equity: [{ t: now, v: budget }],
           user: { start: budget, balance: null, wallet: wallet || "", hist: [{ t: now, v: budget }], walletErr: "", walletStartPending: !!wallet }, feed: [],
           scans: 0, checked: 0, lastTick: now, gaps: [], winner: null, endNote: "" };
+        R.st.engine = ENGINE ? "box" : "page";
         R.lastScanAt = 0;
-        feed("Race on: " + usd(budget) + " → " + usd(goal) + " by " + tm(now + durMs) + " ET. 🫗 is scanning.", "buy");
+        feed("Race on: " + usd(budget) + " → " + usd(goal) + " by " + tm(now + durMs) + " ET. 🫗 is scanning" + (ENGINE ? " on its server (you can close the app)." : " inside this page (server was offline, keep this page open)."), "buy");
         save();
       }
       function closePos(p, px, reason, now) {
@@ -1465,7 +1503,7 @@
         try {
           if (now - st.lastTick > 60000) {
             const gapFrom = st.lastTick, gapTo = Math.min(now, st.end);
-            if (gapTo > gapFrom) { st.gaps.push({ from: gapFrom, to: gapTo }); feed("Page was closed " + Math.round((gapTo - gapFrom) / 60000) + " min (" + tm(gapFrom) + "–" + tm(gapTo) + " ET). 🫗 didn't trade then. Repricing now.", "warn"); }
+            if (gapTo > gapFrom) { st.gaps.push({ from: gapFrom, to: gapTo }); feed((ENGINE ? "🫗's server was offline " : "Page was closed ") + Math.round((gapTo - gapFrom) / 60000) + " min (" + tm(gapFrom) + "–" + tm(gapTo) + " ET). 🫗 didn't trade then. Repricing now.", "warn"); }
           }
           st.lastTick = now;
           await priceOpen(now);
@@ -1482,6 +1520,7 @@
         } finally {
           if (R.st === st) { st.lastTick = Math.max(st.lastTick, Date.now()); save(); }
           R.busy = false; R.nextTickAt = Date.now() + RULES.tickMs;
+          if (ENGINE) publish();
           paintAll();
         }
       }
@@ -1504,7 +1543,7 @@
           setUserBalance(v, "wallet");
           st.user.walletErr = "";
         } catch (e) { st.user.walletErr = "Couldn't read wallet (" + (e.message || "error") + "), retrying. You can type your balance instead."; }
-        finally { R.walletBusy = false; save(); paintAll(); }
+        finally { R.walletBusy = false; save(); if (ENGINE) publish(); paintAll(); }
       }
       function setUserBalance(v, src) {
         const st = R.st; if (!st) return;
@@ -1519,6 +1558,7 @@
         R.timer = setInterval(() => {
           const st = R.st;
           paintClock();
+          if (R.mode === "remote") { setStatus(); return; }
           if (!st || st.status !== "running") return;
           if (Date.now() >= st.end && !R.busy) { tick("end"); return; }
           if (!R.busy && Date.now() >= R.nextTickAt) tick("loop");
@@ -1526,8 +1566,148 @@
           if (!R.busy) setStatus();
         }, 1000);
       }
-      document.addEventListener("visibilitychange", () => { if (!document.hidden && R.st && R.st.status === "running") { R.lastScanAt = 0; tick("visible"); walletTick(true); } });
-      window.addEventListener("pageshow", (e) => { if (e.persisted && R.st && R.st.status === "running") tick("pageshow"); });
+      document.addEventListener("visibilitychange", () => { if (document.hidden || ENGINE) return; poll(); if (R.mode === "local" && R.st && R.st.status === "running") { R.lastScanAt = 0; tick("visible"); walletTick(true); } });
+      window.addEventListener("pageshow", (e) => { if (!e.persisted || ENGINE) return; poll(); if (R.mode === "local" && R.st && R.st.status === "running") tick("pageshow"); });
+
+      // ---------- engine side (headless on the box) ----------
+      let pubBusy = false, pubAgain = false, cmdBusy = false;
+      async function publish() {
+        if (!ENGINE) return;
+        if (pubBusy) { pubAgain = true; return; }
+        pubBusy = true;
+        try {
+          do {
+            pubAgain = false;
+            const doc = { v: 1, hb: Date.now(), engine: "box", st: compact(R.st), done: R.done.slice(-40),
+              meta: { busy: R.busy, nextTickAt: R.nextTickAt, netErr: R.netErr } };
+            await syncPut(SYNC_STATE, doc);
+            R.box.err = ""; R.lastPubAt = Date.now();
+          } while (pubAgain);
+        } catch (e) { R.box.err = e.message || "error"; console.warn("publish", e); }
+        finally { pubBusy = false; }
+      }
+      async function applyCmd(c) {
+        const now = Date.now();
+        if (c.type === "start") {
+          const b = +c.budget, g = +c.goal, d = +c.durMs;
+          if (!(b > 0 && g > b && d >= 60000 && d <= 48 * 3600e3)) return;
+          if (R.st && R.st.status === "running") { R.st.stopped = true; R.st.end = Math.min(R.st.end, now); checkEnd(now); }
+          newRace(b, g, d, c.wallet || "");
+          R.nextTickAt = 0; R.lastWalletAt = 0;
+          setTimeout(() => { tick("start"); if (c.wallet) walletTick(true); }, 10);
+        } else if (c.type === "stop") {
+          if (!R.st || R.st.status !== "running" || (c.rid && c.rid !== R.st.id)) return;
+          R.st.stopped = true; R.st.end = Math.min(R.st.end, now);
+          if (!R.busy) tick("stop");
+        } else if (c.type === "balance") {
+          if (!R.st || (c.rid && c.rid !== R.st.id) || !(+c.v >= 0)) return;
+          setUserBalance(+c.v, "manual");
+          feed("You updated your balance: " + usd(+c.v) + " (" + sgn(+c.v - R.st.user.start) + ")", "");
+          save();
+        } else if (c.type === "clear") {
+          R.st = null; try { localStorage.removeItem(KEY); } catch (e) {}
+        }
+      }
+      async function cmdPoll() {
+        if (cmdBusy) return; cmdBusy = true;
+        try {
+          const d = await syncGet(SYNC_CMD);
+          const cmds = (d && Array.isArray(d.cmds)) ? d.cmds : [];
+          let changed = false;
+          for (const c of cmds) {
+            if (!c || !c.cid || R.done.includes(c.cid)) continue;
+            R.done.push(c.cid); if (R.done.length > 60) R.done = R.done.slice(-60);
+            changed = true;
+            if (Date.now() - (+c.t || 0) > 120000) continue; // stale
+            try { await applyCmd(c); } catch (e) { console.warn("cmd", e); }
+          }
+          if (changed) { save(); try { localStorage.setItem(KEY + ".done", JSON.stringify(R.done)); } catch (e) {} publish(); paintAll(); }
+        } catch (e) { console.warn("cmdPoll", e); }
+        finally { cmdBusy = false; }
+      }
+      async function engineBoot() {
+        try { R.done = JSON.parse(localStorage.getItem(KEY + ".done") || "[]"); } catch (e) { R.done = []; }
+        try {
+          const d = await syncGet(SYNC_STATE);
+          if (d) {
+            (d.done || []).forEach((x) => { if (!R.done.includes(x)) R.done.push(x); });
+            if (d.st && d.st.id && (!R.st || (d.st.lastTick || 0) > (R.st.lastTick || 0) + 1000)) R.st = d.st;
+            if (!d.st && R.st && R.st.status !== "running") R.st = null;
+          }
+        } catch (e) { console.warn("engine boot", e); }
+        // anything already in the command doc at boot that we never saw is only applied if fresh (cmdPoll checks age)
+        if (R.st && R.st.status === "running") { R.nextTickAt = 0; R.lastScanAt = 0; tick("resume"); walletTick(true); }
+        publish();
+        setInterval(cmdPoll, 4000); cmdPoll();
+        setInterval(() => { if (!R.lastPubAt || Date.now() - R.lastPubAt > 25000) publish(); }, 5000);
+        window.__engine = { R, publish, cmdPoll };
+      }
+
+      // ---------- viewer side (your phone): read the server state, send commands ----------
+      let pollBusy = false, cmdChain = Promise.resolve();
+      function sendCmd(c) {
+        c.cid = "c" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); c.t = Date.now();
+        cmdChain = cmdChain.catch(() => {}).then(async () => {
+          let d = null; try { d = await syncGet(SYNC_CMD); } catch (e) {}
+          const cmds = ((d && Array.isArray(d.cmds)) ? d.cmds : []).filter((x) => x && Date.now() - (+x.t || 0) < 600000).slice(-9);
+          cmds.push(c);
+          await syncPut(SYNC_CMD, { v: 1, cmds });
+        });
+        return cmdChain.then(() => c.cid);
+      }
+      async function poll() {
+        if (ENGINE || pollBusy) return; pollBusy = true;
+        try {
+          const d = await syncGet(SYNC_STATE);
+          const b = R.box; b.checked = true; b.err = "";
+          if (d && d.hb) {
+            if (d.hb !== b.hb) { b.hb = d.hb; b.hbSeenAt = Date.now(); b.meta = d.meta || null; b.nextAtLocal = d.meta && d.meta.nextTickAt ? Date.now() + Math.max(0, d.meta.nextTickAt - d.hb) : 0; }
+            b.alive = Date.now() - b.hbSeenAt < BOX_STALE_MS && Date.now() - d.hb < BOX_STALE_MS + 60000;
+            R.done = d.done || [];
+            if (R.pending && R.done.includes(R.pending.cid)) { R.pending = null; setText($("r-err"), ""); }
+            if (!R.pending && (R.mode !== "local" || !(R.st && R.st.status === "running"))) {
+              if (d.st || R.mode === "remote") {
+                R.mode = "remote";
+                R.st = d.st || null;
+                if (R.st && R.st.status === "running") R.setupOpen = false;
+                try { localStorage.setItem(KEY_REMOTE, JSON.stringify(d.st || null)); } catch (e) {}
+              }
+            }
+          } else b.alive = false;
+        } catch (e) {
+          R.box.checked = true; R.box.err = e.message || "error";
+          if (Date.now() - R.box.hbSeenAt > BOX_STALE_MS) R.box.alive = false;
+        } finally {
+          pollBusy = false;
+          if (R.pending && Date.now() - R.pending.at > 30000) { R.pending = null; setText($("r-err"), "🫗's server didn't pick that up. Tap it again."); }
+          paintAll();
+        }
+      }
+      function pollLoop() {
+        const fast = R.pending ? 1500 : document.hidden ? 30000 : (R.st && R.st.status === "running") || !R.box.checked ? 5000 : 15000;
+        setTimeout(() => { poll().finally(pollLoop); }, fast);
+      }
+      function paintEngine() {
+        const a = $("r-engine"), bl = $("rb-engine"), b = R.box, st = R.st;
+        let t, c;
+        if (ENGINE) { t = "Engine mode (server)"; c = "engine-line ok"; }
+        else if (!b.checked) { t = "Checking 🫗's server…"; c = "engine-line"; }
+        else if (b.alive) { t = "🟢 🫗's server is online. Start a race and you can close the app; it keeps trading."; c = "engine-line ok"; }
+        else { t = "🟠 🫗's server isn't answering right now. A race started now runs inside this page, so keep it open."; c = "engine-line warn"; }
+        setText(a, t); setCls(a, c);
+        if (!bl) return;
+        let t2 = "", c2 = "engine-line";
+        if (R.mode === "remote" && st) {
+          const ago = b.hbSeenAt ? Math.round((Date.now() - b.hbSeenAt) / 1000) : null;
+          if (st.status === "running") {
+            if (b.alive) { t2 = "🟢 Running on 🫗's server. You can close the app; it keeps trading." + (ago != null && ago > 20 ? " Last update " + ago + "s ago." : ""); c2 = "engine-line ok"; }
+            else { t2 = "🟠 Lost contact with 🫗's server" + (ago != null ? " (last update " + Math.round(ago / 60) + " min ago)" : "") + ". It picks back up on its own and shows any gap."; c2 = "engine-line warn"; }
+          }
+        } else if (R.mode === "local" && st && st.status === "running") { t2 = "🟠 This race runs inside this page (server was offline when it started). Keep the page open."; c2 = "engine-line warn"; }
+        setText(bl, t2); setCls(bl, c2); bl.hidden = !t2;
+        const f = $("rb-foot");
+        if (f) setText(f, "Paper trades with 4% slippage + 1% fee each way." + (st && st.engine === "box" ? " 🫗 trades on its server whether or not this page is open." : " This race runs only while this page is open; if you close it, 🫗 pauses and shows the gap when you come back."));
+      }
 
       // ---------- UI (built once, updated in place: no flicker) ----------
       const $ = (id) => document.getElementById(id);
@@ -1544,6 +1724,16 @@
       function setStatus() {
         const st = R.st, el = $("rb-status"); if (!st || !el) return;
         let html;
+        if (R.mode === "remote" && st.status === "running") {
+          const m = R.box.meta || {};
+          if (R.pending) html = '<span class="pulse"></span>Sending to 🫗…';
+          else if (!R.box.alive) html = "🫗 server not responding · " + st.scans + " scans, " + st.checked + " coins checked, " + st.traded.length + " bought";
+          else if (m.busy) html = '<span class="pulse"></span>🫗 scanning on server… ' + st.checked + " coins checked so far, " + st.traded.length + " bought";
+          else html = '<span class="pulse"></span>🫗 live on server · next check in ' + Math.max(0, Math.ceil((R.box.nextAtLocal - Date.now()) / 1000)) + "s · " + st.scans + " scans, " + st.checked + " coins checked, " + st.traded.length + " bought";
+          if (el.innerHTML !== html) el.innerHTML = html;
+          setCls(el, "feed-status" + (!R.box.alive || (m.netErr && !m.busy) ? " err" : ""));
+          return;
+        }
         if (st.status !== "running") html = "Race finished " + tm(st.endedAt) + " ET.";
         else if (R.busy) html = '<span class="pulse"></span>🫗 scanning… ' + st.checked + " coins checked so far, " + st.traded.length + " bought";
         else html = '<span class="pulse"></span>🫗 live · next check in ' + Math.max(0, Math.ceil((R.nextTickAt - Date.now()) / 1000)) + "s · " + st.scans + " scans, " + st.checked + " coins checked, " + st.traded.length + " bought";
@@ -1584,6 +1774,7 @@
       }
       function paintAll() {
         paintBar();
+        paintEngine();
         const st = R.st;
         const showBoard = !!st;
         $("race-setup").hidden = showBoard && st.status === "running";
@@ -1591,7 +1782,7 @@
         if (!st) return;
         const running = st.status === "running";
         $("r-stop").hidden = !running; $("r-new").hidden = running;
-        if (!running) $("race-setup").hidden = true;
+        if (!running) $("race-setup").hidden = !R.setupOpen;
         // banner / timer
         const ban = $("rb-banner"); ban.hidden = running;
         if (!running) setText(ban, (st.winner === "bot" ? "🫗 wins this one" : st.winner === "you" ? "🧍 You win!" : "Tie") + " · " + st.endNote);
@@ -1611,12 +1802,13 @@
         $("sp-bot").setAttribute("d", sp.bot); $("sp-me").setAttribute("d", sp.me);
         ["y1", "y2"].forEach((a) => { $("sp-base").setAttribute(a, sp.base.toFixed(1)); $("sp-goal").setAttribute(a, sp.goal.toFixed(1)); });
         $("me-row").hidden = !running;
+        $("r-stop").disabled = !!R.pending;
         setText($("me-note"), st.user.wallet ? (st.user.walletErr || "Auto-tracking wallet " + st.user.wallet.slice(0, 4) + "…" + st.user.wallet.slice(-4) + " every 60s" + (st.user.walletStartPending ? " (reading starting value…)" : "") + ". You can still type a balance.") : "Started at " + usd(st.user.start) + ". Type what your fomo balance shows now and hit UPDATE.");
         // feed + gap
         setStatus();
         const gapMin = st.gaps.reduce((a, g) => a + (g.to - g.from), 0) / 60000;
         const gEl = $("rb-gap"); gEl.hidden = !st.gaps.length;
-        if (st.gaps.length) setText(gEl, "⏸ 🫗 was paused " + Math.round(gapMin) + " min total while this page was closed (" + st.gaps.map((g) => tm(g.from) + "–" + tm(g.to)).join(", ") + " ET). Exits during a pause happen at the price when you came back.");
+        if (st.gaps.length) setText(gEl, "⏸ 🫗 was paused " + Math.round(gapMin) + " min total while " + (st.engine === "box" ? "the server was offline" : "this page was closed") + " (" + st.gaps.map((g) => tm(g.from) + "–" + tm(g.to)).join(", ") + " ET). Exits during a pause happen at the price when you came back.");
         reconcile($("rb-feed"), st.feed.slice(0, 40), (f) => "f" + (f.id || f.t), (k, f) => { const li = document.createElement("li"); li.dataset.key = k; li.className = f.kind; li.innerHTML = "<time>" + tms(f.t) + "</time>" + esc(f.text); return li; }, () => {});
         // open positions
         setText($("h-open"), "🫗 Open positions (" + st.open.length + "/" + RULES.maxOpen + ")");
@@ -1666,6 +1858,15 @@
         if (w && !/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(w)) return setText(err, "That wallet address doesn't look right. Leave it blank to type your balance instead.");
         setText(err, "");
         try { localStorage.setItem("snipe.race.lastSetup", JSON.stringify({ b, g, h: $("r-hours").value, m: $("r-mins").value, w })); } catch (e) {}
+        if (R.box.alive && !ENGINE) {
+          setText(err, "Sending to 🫗's server…"); $("r-start").disabled = true;
+          sendCmd({ type: "start", budget: b, goal: g, durMs, wallet: w })
+            .then((cid) => { R.pending = { cid, at: Date.now(), kind: "start" }; R.mode = "remote"; poll(); })
+            .catch((e) => setText(err, "Couldn't reach 🫗's server (" + (e.message || "error") + "). Tap START RACE again."))
+            .finally(() => { $("r-start").disabled = false; });
+          return;
+        }
+        R.mode = ENGINE ? "engine" : "local"; R.setupOpen = false;
         newRace(b, g, durMs, w);
         paintAll(); R.nextTickAt = 0; tick("start"); if (w) walletTick(true);
         window.scrollTo({ top: 0, behavior: "smooth" });
@@ -1673,14 +1874,27 @@
       $("r-stop").addEventListener("click", () => {
         if (!R.st || R.st.status !== "running") return;
         if (!confirm("Stop the race now? 🫗 sells everything at current prices and the race ends.")) return;
+        if (R.mode === "remote") {
+          sendCmd({ type: "stop", rid: R.st.id }).then((cid) => { R.pending = { cid, at: Date.now(), kind: "stop" }; poll(); })
+            .catch((e) => alert("Couldn't reach 🫗's server (" + (e.message || "error") + "). Try again."));
+          paintAll(); return;
+        }
         R.st.stopped = true; R.st.end = Math.min(R.st.end, Date.now());
         tick("stop");
       });
-      $("r-new").addEventListener("click", () => { $("race-setup").hidden = false; $("race-setup").scrollIntoView({ behavior: "smooth" }); });
+      $("r-new").addEventListener("click", () => { R.setupOpen = true; $("race-setup").hidden = false; $("race-setup").scrollIntoView({ behavior: "smooth" }); });
       $("me-upd").addEventListener("click", () => {
         const v = parseFloat($("me-bal").value);
         if (!(v >= 0)) { setText($("me-note"), "Type your balance in dollars, e.g. 22.40"); return; }
-        setUserBalance(v, "manual"); $("me-bal").value = ""; $("me-bal").blur();
+        $("me-bal").value = ""; $("me-bal").blur();
+        if (R.mode === "remote") {
+          const st = R.st; st.user.balance = r2(v); st.user.updatedAt = Date.now(); paintAll();
+          setText($("me-note"), "Sending your balance to 🫗…");
+          sendCmd({ type: "balance", v, rid: st.id }).then((cid) => { R.pending = { cid, at: Date.now(), kind: "balance" }; poll(); })
+            .catch((e) => setText($("me-note"), "Couldn't reach 🫗's server (" + (e.message || "error") + "). Try again."));
+          return;
+        }
+        setUserBalance(v, "manual");
         feed("You updated your balance: " + usd(v) + " (" + sgn(v - R.st.user.start) + ")", "");
       });
       $("me-bal").addEventListener("keydown", (e) => { if (e.key === "Enter") $("me-upd").click(); });
@@ -1688,12 +1902,17 @@
 
       // ---------- boot: restore + catch up ----------
       R.st = load();
-      if (R.st && R.st.status === "running") { R.nextTickAt = 0; R.lastScanAt = 0; setTimeout(() => { tick("resume"); walletTick(true); }, 50); }
+      if (ENGINE) { engineBoot(); }
+      else {
+        if (R.st && R.st.status === "running") { R.mode = "local"; R.nextTickAt = 0; R.lastScanAt = 0; setTimeout(() => { tick("resume"); walletTick(true); }, 50); }
+        else { try { const c = JSON.parse(localStorage.getItem(KEY_REMOTE) || "null"); if (c && c.id) { R.st = c; R.mode = "remote"; } } catch (e) {} }
+        poll().finally(pollLoop);
+      }
       loop();
       paintAll();
       const hv = (location.hash || "").replace("#", "");
       if (views[hv]) show(hv); else paintBar();
-      window.__views = { show, loadData, paintAll, tick };
+      window.__views = { show, loadData, paintAll, tick, poll, sendCmd };
     })();
   </script>
 </body>
