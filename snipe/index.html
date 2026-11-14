@@ -8,6 +8,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="description" content="Pocket Solana coin sniper. Live DexScreener stats, open picks in fomo." />
   <title>SNIPE</title>
+  <link rel="icon" href="data:," />
   <style>
     :root {
       --bg: #07070a;
@@ -310,12 +311,12 @@
     .panel { background: var(--card); border: 1px solid var(--card-border); border-radius: 16px; padding: 14px; margin-bottom: 12px; }
     .panel h2 { font-size: 14px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
     .empty { color: var(--muted); font-size: 14px; text-align: center; padding: 10px 0; }
-    .track { position: relative; height: 92px; margin: 6px 0 4px; }
+    .track { position: relative; height: 104px; margin: 26px 8px 6px; }
     .lane { position: absolute; left: 0; right: 0; height: 36px; border-bottom: 2px dashed #2b2d3d; }
-    .lane.l1 { top: 0; } .lane.l2 { top: 46px; }
+    .lane.l1 { top: 0; } .lane.l2 { top: 60px; }
     .finish { position: absolute; right: 0; top: 0; bottom: 0; width: 6px; background: repeating-linear-gradient(0deg, #fff 0 6px, #000 6px 12px); border-radius: 2px; }
     .runner { position: absolute; font-size: 28px; transform: translateX(-50%); transition: left 1s ease; line-height: 36px; }
-    .runner small { position: absolute; top: -6px; left: 50%; transform: translateX(-50%); font-size: 10px; color: var(--muted); white-space: nowrap; }
+    .runner small { position: absolute; top: -20px; font-weight: 700; left: 50%; transform: translateX(-50%); font-size: 10px; color: var(--muted); white-space: nowrap; }
     .scorebox { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     .scorebox div { background: var(--chip); border-radius: 12px; padding: 10px; text-align: center; }
     .scorebox b { display: block; font-size: 22px; margin-top: 2px; }
@@ -344,6 +345,45 @@
     table.stats td:first-child { width: 48%; }
     .winner { text-align: center; font-size: 20px; font-weight: 900; padding: 8px; color: var(--lime); }
     .spark { width: 100%; height: 60px; display: block; }
+    .center { text-align: center; }
+    .form .row { align-items: end; }
+    .dur { display: flex; align-items: center; gap: 3px; }
+    .dur input { padding: 11px 6px; text-align: center; }
+    .dur span { color: var(--muted); font-size: 12px; }
+    .err-line { color: var(--red); font-size: 12px; min-height: 16px; margin-top: 6px; }
+    .btn-start { margin-top: 6px; width: 100%; border: 0; border-radius: 18px; background: var(--lime); color: #0a0b08; font-weight: 900; padding: 18px; font-size: 22px; letter-spacing: 0.12em; cursor: pointer; box-shadow: 0 10px 40px rgba(200,255,61,0.18); font-family: inherit; }
+    .btn-start:active { transform: scale(0.98); }
+    .btn-stop { width: 100%; border: 1px solid #5a2630; border-radius: 14px; background: #1d0f13; color: var(--red); font-weight: 900; padding: 14px; font-size: 15px; letter-spacing: 0.1em; cursor: pointer; font-family: inherit; }
+    .scorebox b { font-variant-numeric: tabular-nums; }
+    .scorebox .sub { display: block; min-height: 16px; }
+    .legend { font-size: 11px; margin-top: 2px; }
+    .lg-bot { color: var(--lime); } .lg-me { color: var(--blue); }
+    .me-row { margin-top: 10px; border-top: 1px solid var(--card-border); padding-top: 10px; }
+    .me-row label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+    .me-inputs { display: flex; gap: 8px; }
+    .me-inputs input { flex: 1; min-width: 0; background: var(--chip); border: 1px solid var(--card-border); color: var(--text); border-radius: 10px; padding: 11px; font-size: 16px; }
+    .me-inputs button { border: 0; border-radius: 10px; background: var(--blue); color: #08101f; font-weight: 900; padding: 0 16px; letter-spacing: 0.06em; cursor: pointer; font-family: inherit; }
+    #me-note { margin-top: 6px; min-height: 16px; }
+    .feed-status { font-size: 13px; color: #d7d8e2; min-height: 20px; }
+    .feed-status.err { color: var(--orange); }
+    .gap-note { margin-top: 8px; font-size: 12px; color: var(--orange); background: #21170e; border-radius: 10px; padding: 8px 10px; line-height: 1.4; }
+    .feed { list-style: none; margin-top: 8px; max-height: 190px; overflow-y: auto; font-size: 12px; color: #b9bac8; }
+    .feed li { padding: 5px 0; border-top: 1px solid #1c1d27; line-height: 1.35; }
+    .feed li:first-child { border-top: 0; }
+    .feed li time { color: var(--muted); margin-right: 6px; font-variant-numeric: tabular-nums; }
+    .feed li.buy { color: var(--lime); } .feed li.sell-up { color: var(--green); } .feed li.sell-down { color: var(--red); }
+    .trade { border-top: 1px solid var(--card-border); padding: 10px 0; font-size: 13px; }
+    .trade:first-child { border-top: 0; padding-top: 2px; }
+    .trade-head { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+    .trade-head b { font-size: 15px; }
+    .trade-head .pnl { font-weight: 800; font-variant-numeric: tabular-nums; }
+    .trade .sub { margin-top: 3px; }
+    .trade details { margin-top: 6px; color: #cfd0dc; }
+    .trade summary { color: var(--lime); cursor: pointer; font-size: 12px; font-weight: 700; }
+    .trade details p { margin-top: 6px; line-height: 1.45; white-space: pre-wrap; font-size: 12px; }
+    .trade a { color: var(--blue); }
+    .bar { height: 4px; background: #1d1e28; border-radius: 4px; margin-top: 6px; overflow: hidden; position: relative; }
+    .bar i { position: absolute; top: 0; bottom: 0; left: 0; width: 0; transition: width .6s ease, background .3s; }
   </style>
 </head>
 <body>
@@ -374,26 +414,64 @@
   </section>
 
   <section class="view" id="view-race" hidden>
-    <div id="race-live"><div class="panel"><div class="empty">Loading race…</div></div></div>
-    <div class="panel form">
-      <h2>Set up a race</h2>
+    <div class="panel form" id="race-setup">
+      <h2>Race 🫗 — set it up</h2>
+      <p class="sub" style="margin-bottom:6px">You trade in fomo. 🫗 paper trades right here on this page. Whoever's further ahead at the buzzer, or first to the goal, wins.</p>
       <div class="row">
-        <div><label for="r-budget">Budget $</label><input id="r-budget" type="number" inputmode="decimal" placeholder="100" /></div>
-        <div><label for="r-hours">Hours</label><input id="r-hours" type="number" inputmode="decimal" placeholder="4" /></div>
-        <div><label for="r-goal">Goal $</label><input id="r-goal" type="number" inputmode="decimal" placeholder="200" /></div>
+        <div><label for="r-budget">Budget $</label><input id="r-budget" type="number" inputmode="decimal" placeholder="18" /></div>
+        <div><label for="r-goal">Goal $</label><input id="r-goal" type="number" inputmode="decimal" placeholder="40" /></div>
+        <div><label for="r-hours">Time</label>
+          <div class="dur"><input id="r-hours" type="number" inputmode="numeric" placeholder="2" aria-label="Hours" /><span>h</span><input id="r-mins" type="number" inputmode="numeric" placeholder="0" aria-label="Minutes" /><span>m</span></div>
+        </div>
       </div>
-      <button type="button" class="btn2" id="r-make">MAKE START MESSAGE</button>
-      <div class="msg" id="r-msg" hidden></div>
-      <p class="sub" style="margin-top:8px">Paste it to me in chat and I start the race. This page can't message me directly.</p>
+      <label for="r-wallet">Your fomo wallet address (optional, tracks your balance automatically)</label>
+      <input id="r-wallet" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Leave blank to type your balance yourself" />
+      <p class="err-line" id="r-err"></p>
+      <button type="button" class="btn-start" id="r-start">START RACE</button>
     </div>
-    <div class="panel form">
-      <h2>Log my PnL</h2>
-      <label for="u-pnl">My PnL right now ($, e.g. 35 or -12)</label>
-      <input id="u-pnl" type="number" inputmode="decimal" placeholder="0" />
-      <label for="u-note">Note (optional)</label>
-      <input id="u-note" type="text" placeholder="aped XYZ at 40k" />
-      <button type="button" class="btn2" id="u-make">MAKE PNL MESSAGE</button>
-      <div class="msg" id="u-msg" hidden></div>
+
+    <div id="race-board" hidden>
+      <div class="panel">
+        <div class="winner" id="rb-banner" hidden></div>
+        <div class="timer" id="rb-timer"><small>TIME LEFT</small><span id="rb-clock">--:--:--</span></div>
+        <div class="track">
+          <div class="lane l1"></div><div class="lane l2"></div><div class="finish"></div>
+          <div class="runner" id="run-bot" style="top:0;left:4%">🫗<small id="run-bot-lbl">$0.00</small></div>
+          <div class="runner" id="run-me" style="top:60px;left:4%">🧍<small id="run-me-lbl">$0.00</small></div>
+        </div>
+        <div class="scorebox">
+          <div>🫗 Bot<b id="sb-bot-pnl">+$0.00</b><span class="sub" id="sb-bot-sub">—</span></div>
+          <div>🧍 You<b id="sb-me-pnl">+$0.00</b><span class="sub" id="sb-me-sub">—</span></div>
+        </div>
+        <p class="sub center" id="rb-meta" style="margin-top:8px">—</p>
+        <svg class="spark" id="rb-spark" viewBox="0 0 300 60" preserveAspectRatio="none">
+          <line id="sp-base" x1="0" x2="300" y1="30" y2="30" stroke="#333" stroke-dasharray="4 4" />
+          <line id="sp-goal" x1="0" x2="300" y1="4" y2="4" stroke="#3a4a1a" stroke-dasharray="2 4" />
+          <path id="sp-me" d="" fill="none" stroke="#7aa2ff" stroke-width="1.6" />
+          <path id="sp-bot" d="" fill="none" stroke="#c8ff3d" stroke-width="2" />
+        </svg>
+        <p class="sub center legend"><span class="lg-bot">━ 🫗</span> <span class="lg-me">━ you</span> <span>┅ start</span></p>
+        <div class="me-row" id="me-row">
+          <label for="me-bal">My balance now $</label>
+          <div class="me-inputs"><input id="me-bal" type="number" inputmode="decimal" placeholder="18" /><button type="button" id="me-upd">UPDATE</button></div>
+          <p class="sub" id="me-note"></p>
+        </div>
+      </div>
+
+      <div class="panel feed-panel">
+        <h2>Live 🫗 activity</h2>
+        <div class="feed-status" id="rb-status"><span class="pulse"></span>Starting…</div>
+        <p class="gap-note" id="rb-gap" hidden></p>
+        <ul class="feed" id="rb-feed"></ul>
+      </div>
+
+      <div class="panel"><h2 id="h-open">🫗 Open positions (0)</h2><div id="rb-open"></div><div class="empty" id="rb-open-empty">Hunting…</div></div>
+      <div class="panel"><h2 id="h-closed">🫗 Closed (0)</h2><div id="rb-closed"></div><div class="empty" id="rb-closed-empty">No closed trades yet</div></div>
+      <div class="panel"><h2>Passed on</h2><div id="rb-skipped"></div><div class="empty" id="rb-skipped-empty">Nothing yet</div></div>
+
+      <button type="button" class="btn-stop" id="r-stop">STOP RACE</button>
+      <button type="button" class="btn-start" id="r-new" hidden>NEW RACE</button>
+      <p class="sub center" style="margin-top:10px">Paper trades with 4% slippage + 1% fee each way. 🫗 only trades while this page is open. If you close it, 🫗 pauses, and when you come back it reprices everything and shows the gap.</p>
     </div>
   </section>
 
@@ -401,7 +479,7 @@
     <div id="data-body"><div class="panel"><div class="empty">Loading data…</div></div></div>
   </section>
 
-  <footer>Not financial advice. Data from DexScreener.</footer>
+  <footer>Not financial advice. Data from DexScreener + Jupiter. Race 🫗 is paper trading only.</footer>
   <div id="toast" class="toast" role="status">Copied</div>
 
   <script>
@@ -449,7 +527,11 @@
         return Number.isFinite(n) ? n : 0;
       }
       async function getJson(url) {
-        const res = await fetch(url);
+        const ctl = typeof AbortController !== "undefined" ? new AbortController() : null;
+        const to = ctl ? setTimeout(function () { ctl.abort(); }, 12000) : null;
+        let res;
+        try { res = await fetch(url, ctl ? { signal: ctl.signal } : undefined); }
+        finally { if (to) clearTimeout(to); }
         if (!res.ok) throw new Error("DexScreener " + res.status);
         return res.json();
       }
@@ -959,6 +1041,50 @@
           }
         }
       }
+      // ---- shared discovery for RACE (no UI side effects) ----
+      async function discover() {
+        const jobs = [
+          getJson(DS + "/token-profiles/latest/v1"),
+          getJson(DS + "/token-boosts/latest/v1"),
+          getJson(DS + "/token-boosts/top/v1")
+        ];
+        SEARCH_QUERIES.forEach(function (q) { jobs.push(getJson(DS + "/latest/dex/search?q=" + encodeURIComponent(q))); });
+        const results = await Promise.allSettled(jobs);
+        const lists = [], searchPairs = [];
+        results.forEach(function (r, i) {
+          if (r.status !== "fulfilled") return;
+          if (i >= 3) { if (r.value && Array.isArray(r.value.pairs)) searchPairs.push.apply(searchPairs, r.value.pairs); }
+          else lists.push(r.value);
+        });
+        if (!lists.length && !searchPairs.length) throw new Error("DexScreener unreachable");
+        const collected = collectAddresses(lists);
+        const extraPairs = ingestSearchPairs(collected, searchPairs);
+        const pairs = await fetchPairs(collected.order.slice(0, 150));
+        const byMint = bestPair(pairs.concat(extraPairs));
+        const cands = [];
+        collected.order.forEach(function (addr) {
+          const p = byMint[addr];
+          if (!p) return;
+          const meta = collected.meta[addr] || {};
+          let mode = null, score = 0;
+          if (isLowMc(p)) { mode = "lowmc"; score = scoreLowMc(p, meta); }
+          else if (isEarly(p)) { mode = "snipe"; score = scorePick(p, meta); }
+          if (mode) cands.push({ pair: p, meta: meta, score: score, mode: mode, bonding: isBonding(p) });
+        });
+        cands.sort(function (a, b) { return b.score - a.score; });
+        return { cands: cands, checked: collected.order.length };
+      }
+      async function quotes(mints) {
+        const out = {};
+        if (!mints.length) return out;
+        const pairs = await fetchPairs(mints);
+        const byMint = bestPair(pairs);
+        Object.keys(byMint).forEach(function (m) {
+          const p = byMint[m];
+          out[m] = { price: num(p.priceUsd), mcap: num(p.marketCap) || num(p.fdv), liq: p.liquidity ? num(p.liquidity.usd) : null, bonding: isBonding(p) };
+        });
+        return out;
+      }
       function setLowMc(on, opts) {
         opts = opts || {};
         lowMcOn = !!on;
@@ -994,23 +1120,30 @@
         isEarly: isEarly,
         isLowMc: isLowMc,
         isBonding: isBonding,
-        setLowMc: setLowMc
+        setLowMc: setLowMc,
+        discover: discover,
+        quotes: quotes
       };
     })();
   </script>
   <script>
     (function () {
+      // ================= views + DATA =================
       const DATA = "./data/";
       const $bar = document.getElementById("modebar");
       const $low = document.getElementById("lowmc");
       const views = { snipe: "view-snipe", race: "view-race", data: "view-data" };
-      let current = "snipe", raceTimer = null, clockTimer = null, lastRace = null;
+      let current = "snipe";
       const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-      const usd = (n) => (n == null || !isFinite(n) ? "—" : (n < 0 ? "-$" : "$") + Math.abs(n).toLocaleString(undefined, { maximumFractionDigits: 2 }));
+      const usd = (n) => (n == null || !isFinite(n) ? "—" : (n < 0 ? "-$" : "$") + Math.abs(n).toFixed(2));
       const sgn = (n) => (n == null || !isFinite(n) ? "—" : (n >= 0 ? "+" : "-") + "$" + Math.abs(n).toFixed(2));
-      const cls = (n) => (n > 0 ? "up" : n < 0 ? "down" : "");
+      const pctS = (n) => (n == null || !isFinite(n) ? "—" : (n >= 0 ? "+" : "") + n.toFixed(1) + "%");
+      const cls = (n) => (n > 0.004 ? "up" : n < -0.004 ? "down" : "");
       const mc = (n) => (!n ? "—" : n >= 1e6 ? "$" + (n / 1e6).toFixed(2) + "M" : n >= 1e3 ? "$" + (n / 1e3).toFixed(1) + "K" : "$" + Math.round(n));
-      const tm = (iso) => (iso ? new Date(iso).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) : "");
+      const tm = (t) => (t ? new Date(t).toLocaleTimeString("en-US", { timeZone: "America/New_York", hour: "numeric", minute: "2-digit" }) : "");
+      const tms = (t) => new Date(t).toLocaleTimeString("en-US", { timeZone: "America/New_York", hour: "numeric", minute: "2-digit", second: "2-digit" });
+      const r2 = (x) => Math.round(x * 100) / 100;
+      const nn = (v) => (v == null || v === "" || !isFinite(Number(v)) ? null : Number(v));
       async function getData(name) {
         const r = await fetch(DATA + name + "?t=" + Date.now(), { cache: "no-store" });
         if (!r.ok) throw new Error(r.status === 404 ? "none" : "HTTP " + r.status);
@@ -1021,15 +1154,16 @@
           const v = b.dataset.view;
           b.classList.toggle("on", v === current);
           if (v === "lowmc") b.classList.toggle("lit", $low.getAttribute("aria-pressed") === "true");
+          if (v === "race") b.classList.toggle("lit", !!(R.st && R.st.status === "running") && v !== current);
         });
       }
       function show(v) {
         current = v;
         Object.entries(views).forEach(([k, id]) => (document.getElementById(id).hidden = k !== v));
         paintBar();
-        clearInterval(raceTimer); raceTimer = null;
-        if (v === "race") { loadRace(); raceTimer = setInterval(loadRace, 30000); }
+        if (v === "race") paintAll();
         if (v === "data") loadData();
+        try { history.replaceState(null, "", v === "snipe" ? location.pathname : "#" + v); } catch (e) {}
       }
       $bar.addEventListener("click", (e) => {
         const b = e.target.closest("button"); if (!b) return;
@@ -1038,95 +1172,528 @@
       });
       new MutationObserver(paintBar).observe($low, { attributes: true, attributeFilter: ["aria-pressed"] });
 
-      // ---------- RACE ----------
-      function spark(curve, budget) {
-        if (!curve || curve.length < 2) return "";
-        const vs = curve.map((p) => p.v), lo = Math.min(budget, ...vs), hi = Math.max(budget, ...vs), W = 300, H = 60;
-        const x = (i) => (i / (vs.length - 1)) * W, y = (v) => H - 4 - ((v - lo) / (hi - lo || 1)) * (H - 8);
-        const d = vs.map((v, i) => (i ? "L" : "M") + x(i).toFixed(1) + " " + y(v).toFixed(1)).join(" ");
-        return '<svg class="spark" viewBox="0 0 300 60" preserveAspectRatio="none"><line x1="0" x2="300" y1="' + y(budget).toFixed(1) + '" y2="' + y(budget).toFixed(1) + '" stroke="#333" stroke-dasharray="4 4"/><path d="' + d + '" fill="none" stroke="#c8ff3d" stroke-width="2"/></svg>';
-      }
-      function posHtml(p, open) {
-        const pnl = p.pnlUsd, pct = p.pnlPct;
-        const src = (p.sources || []).map((u) => '<a href="' + esc(u) + '" target="_blank" rel="noopener">' + esc(String(u).replace(/^https?:\/\/(www\.)?/, "").slice(0, 40)) + "</a>").join(" · ");
-        return '<div class="pos"><div class="pos-head"><b>' + esc(p.symbol) + '</b><span class="' + cls(pnl) + '">' + sgn(pnl) + " (" + (pct >= 0 ? "+" : "") + (pct || 0).toFixed(1) + "%)</span></div>" +
-          '<div class="sub">' + (open ? "Open since " + tm(p.entryTime) + " · in " + usd(p.costUsd) + " at " + mc(p.entryMcap) + " MC" : tm(p.entryTime) + " → " + tm(p.exitTime) + " · " + esc(p.exitReason)) +
-          ' · <a href="' + esc(p.fomo) + '" target="_blank" rel="noopener">fomo</a></div>' +
-          (p.thesis ? "<details><summary>Thesis</summary><p>" + esc(p.thesis) + "</p>" + (src ? '<p class="sub">' + src + "</p>" : "") + "</details>" : "") + "</div>";
-      }
-      function tickClock() {
-        const el = document.getElementById("race-clock"); if (!el || !lastRace || !lastRace.config) return;
-        const ms = Date.parse(lastRace.config.endTime) - Date.now();
-        if (ms <= 0) { el.textContent = "00:00:00"; return; }
-        const h = Math.floor(ms / 3600e3), m = Math.floor((ms % 3600e3) / 60e3), s = Math.floor((ms % 60e3) / 1000);
-        el.textContent = [h, m, s].map((n) => String(n).padStart(2, "0")).join(":");
-      }
-      function renderRace(r) {
-        lastRace = r;
-        const box = document.getElementById("race-live");
-        if (!r || r.status === "idle" || !r.config) { box.innerHTML = '<div class="panel"><div class="empty">No race running — set one up below.</div></div>'; return; }
-        if (r.status === "scheduled") { box.innerHTML = '<div class="panel"><div class="empty">Race starts at ' + tm(r.config.startTime) + "</div></div>"; return; }
-        const c = r.config, b = r.bot, u = r.user, goalPnl = c.goalUsd ? c.goalUsd - c.budget : null;
-        const prog = (p) => Math.max(2, Math.min(96, goalPnl ? 2 + (Math.max(p, 0) / goalPnl) * 94 : 50 + (p / c.budget) * 46));
-        let h = '<div class="panel">';
-        if (r.status === "ended") h += '<div class="winner">' + (r.winner === "bot" ? "🫗 wins this one" : r.winner === "you" ? "🧍 You win!" : "Tie") + "</div>";
-        else h += '<div class="timer"><small>TIME LEFT</small><span id="race-clock">--:--:--</span></div>';
-        h += '<div class="track"><div class="lane l1"></div><div class="lane l2"></div><div class="finish"></div>' +
-          '<div class="runner" style="top:0;left:' + prog(b.pnlUsd) + '%">🫗<small>' + sgn(b.pnlUsd) + "</small></div>" +
-          '<div class="runner" style="top:46px;left:' + prog(u.pnlUsd) + '%">🧍<small>' + sgn(u.pnlUsd) + "</small></div></div>";
-        h += '<div class="scorebox"><div>🫗 Bot<b class="' + cls(b.pnlUsd) + '">' + sgn(b.pnlUsd) + '</b><span class="sub">' + usd(b.equity) + " · " + (b.pnlPct >= 0 ? "+" : "") + b.pnlPct.toFixed(1) + "%</span></div>" +
-          '<div>🧍 You<b class="' + cls(u.pnlUsd) + '">' + sgn(u.pnlUsd) + '</b><span class="sub">' + (u.history.length ? "updated " + tm(u.history[u.history.length - 1].time) : "no PnL logged yet") + "</span></div></div>";
-        h += '<p class="sub" style="text-align:center;margin-top:8px">Budget ' + usd(c.budget) + " · Goal " + (c.goalUsd ? usd(c.goalUsd) : "—") + " · ends " + tm(c.endTime) + "</p>";
-        h += spark(b.equityCurve, c.budget) + "</div>";
-        h += '<div class="panel"><h2>🫗 Open positions (' + b.open.length + ")</h2>" + (b.open.length ? b.open.map((p) => posHtml(p, true)).join("") : '<div class="empty">' + (r.status === "running" ? "Hunting… " + (r.candidatesPending || 0) + " coins awaiting my thesis" : "None") + "</div>") + "</div>";
-        h += '<div class="panel"><h2>🫗 Closed (' + b.closed.length + ")</h2>" + (b.closed.length ? b.closed.slice().reverse().map((p) => posHtml(p, false)).join("") : '<div class="empty">No closed trades yet</div>') + "</div>";
-        if (b.skipped && b.skipped.length) h += '<div class="panel"><h2>Passed on</h2>' + b.skipped.slice().reverse().slice(0, 8).map((s) => '<div class="pos"><b>' + esc(s.symbol || s.mint.slice(0, 6)) + "</b><details><summary>Why I skipped</summary><p>" + esc(s.thesis) + "</p></details></div>").join("") + "</div>";
-        h += '<p class="sub" style="text-align:center">Paper trades · 4% slippage + 1% fee each way · updated ' + tm(r.updated) + "</p>";
-        box.innerHTML = h;
-        tickClock();
-      }
-      async function loadRace() {
-        try { renderRace(await getData("race.json")); }
-        catch (e) { if (e.message === "none") renderRace(null); else document.getElementById("race-live").innerHTML = '<div class="panel"><div class="empty">Couldn\'t load race data (' + esc(e.message) + ")</div></div>"; }
-      }
-      clockTimer = setInterval(tickClock, 1000);
-      async function copy(text) { try { await navigator.clipboard.writeText(text); } catch (e) {} const t = document.getElementById("toast"); if (t) { t.textContent = "Copied — paste it to me"; t.classList.add("show"); setTimeout(() => t.classList.remove("show"), 1600); } }
-      document.getElementById("r-make").addEventListener("click", () => {
-        const b = parseFloat(document.getElementById("r-budget").value), h = parseFloat(document.getElementById("r-hours").value), g = parseFloat(document.getElementById("r-goal").value);
-        const el = document.getElementById("r-msg"); el.hidden = false;
-        if (!(b > 0) || !(h > 0) || !(g > 0)) { el.textContent = "Fill in budget, hours and goal."; return; }
-        const msg = "Start race: $" + b + ", " + h + "h, goal $" + g; el.textContent = msg; copy(msg);
-      });
-      document.getElementById("u-make").addEventListener("click", () => {
-        const p = parseFloat(document.getElementById("u-pnl").value), note = document.getElementById("u-note").value.trim();
-        const el = document.getElementById("u-msg"); el.hidden = false;
-        if (!isFinite(p)) { el.textContent = "Enter your PnL in dollars."; return; }
-        const msg = "Race PnL: " + (p >= 0 ? "+$" : "-$") + Math.abs(p) + (note ? " (" + note + ")" : ""); el.textContent = msg; copy(msg);
-      });
-
-      // ---------- DATA ----------
       function rowHtml(a) { return "<tr><td>" + esc(a.label) + "</td><td>" + a.decided + "/" + a.n + "</td><td>" + a.wins + "-" + a.losses + "-" + a.flats + "</td><td><b>" + (a.winRate == null ? "—" : a.winRate + "%") + "</b></td></tr>"; }
       const thead = "<tr><th></th><th>Done/All</th><th>W-L-F</th><th>Win</th></tr>";
       async function loadData() {
         const box = document.getElementById("data-body");
         let s;
         try { s = await getData("stats.json"); } catch (e) { box.innerHTML = '<div class="panel"><div class="empty">' + (e.message === "none" ? "Collecting data… no stats published yet." : "Couldn't load stats (" + esc(e.message) + ")") + "</div></div>"; return; }
-        let h = '<div class="panel"><div class="big">' + (s.overall.winRate == null ? "—" : s.overall.winRate + "%") + "<small>WIN RATE · " + s.overall.decided + " decided of " + s.picks + " picks</small></div>";
-        if (s.overall.decided < 100) h += '<p class="empty">Collecting data… ' + s.picks + " picks so far (" + s.pending + " still playing out). Numbers get reliable after a few hundred decided.</p>";
-        h += '<p class="sub" style="text-align:center">' + esc(s.definition) + "<br>Updated " + tm(s.updated) + "</p></div>";
-        h += '<div class="panel"><h2>Overall</h2><table class="stats">' + thead + rowHtml(s.overall) + rowHtml(s.top8) + "</table></div>";
-        for (const [m, label] of [["normal", "SNIPE mode"], ["lowmc", "LOW MC mode"]]) {
-          const d = s.modes[m]; if (!d) continue;
-          h += '<div class="panel"><h2>' + label + '</h2><table class="stats">' + thead + rowHtml(d.all) + rowHtml(d.top8) + d.scoreBands.map(rowHtml).join("") + "</table></div>";
-        }
-        h += '<div class="panel"><h2>What predicts wins</h2><table class="stats"><tr><th></th><th>Yes</th><th>No</th><th>Edge</th></tr>' +
-          s.features.map((f) => "<tr><td>" + esc(f.feature) + "</td><td>" + (f.yes.winRate == null ? "—" : f.yes.winRate + "%") + ' <span class="sub">(' + f.yes.decided + ")</span></td><td>" + (f.no.winRate == null ? "—" : f.no.winRate + "%") + '</td><td class="' + cls(f.edge) + '">' + (f.edge == null ? "—" : (f.edge > 0 ? "+" : "") + f.edge) + "</td></tr>").join("") + "</table></div>";
-        h += '<div class="panel"><h2>Recent winners</h2>' + (s.bestRecentWinners.length ? s.bestRecentWinners.map((w) => '<div class="pos"><div class="pos-head"><b>' + esc(w.symbol) + '</b><span class="up">+' + w.maxUpPct + '%</span></div><div class="sub">' + (w.mode === "lowmc" ? "LOW MC" : "SNIPE") + " · score " + w.score + " · picked " + tm(w.pickedAt) + " at " + mc(w.entryMcap) + ' · <a href="' + esc(w.fomo) + '" target="_blank" rel="noopener">Open in fomo</a></div></div>').join("") : '<div class="empty">No winners decided yet</div>') + "</div>";
-        box.innerHTML = h;
+        try {
+          let h = '<div class="panel"><div class="big">' + (s.overall.winRate == null ? "—" : s.overall.winRate + "%") + "<small>WIN RATE · " + s.overall.decided + " decided of " + s.picks + " picks</small></div>";
+          if (s.overall.decided < 100) h += '<p class="empty">Collecting data… ' + s.picks + " picks so far (" + s.pending + " still playing out). Numbers get reliable after a few hundred decided.</p>";
+          h += '<p class="sub" style="text-align:center">' + esc(s.definition) + "<br>Updated " + tm(s.updated) + " ET</p></div>";
+          h += '<div class="panel"><h2>Overall</h2><table class="stats">' + thead + rowHtml(s.overall) + rowHtml(s.top8) + "</table></div>";
+          for (const [m, label] of [["normal", "SNIPE mode"], ["lowmc", "LOW MC mode"]]) {
+            const d = s.modes && s.modes[m]; if (!d) continue;
+            h += '<div class="panel"><h2>' + label + '</h2><table class="stats">' + thead + rowHtml(d.all) + rowHtml(d.top8) + (d.scoreBands || []).map(rowHtml).join("") + "</table></div>";
+          }
+          h += '<div class="panel"><h2>What predicts wins</h2><table class="stats"><tr><th></th><th>Yes</th><th>No</th><th>Edge</th></tr>' +
+            (s.features || []).map((f) => "<tr><td>" + esc(f.feature) + "</td><td>" + (f.yes.winRate == null ? "—" : f.yes.winRate + "%") + ' <span class="sub">(' + f.yes.decided + ")</span></td><td>" + (f.no.winRate == null ? "—" : f.no.winRate + "%") + '</td><td class="' + cls(f.edge) + '">' + (f.edge == null ? "—" : (f.edge > 0 ? "+" : "") + f.edge) + "</td></tr>").join("") + "</table></div>";
+          const wins = s.bestRecentWinners || [];
+          h += '<div class="panel"><h2>Recent winners</h2>' + (wins.length ? wins.map((w) => '<div class="trade"><div class="trade-head"><b>' + esc(w.symbol) + '</b><span class="up">+' + w.maxUpPct + '%</span></div><div class="sub">' + (w.mode === "lowmc" ? "LOW MC" : "SNIPE") + " · score " + w.score + " · picked " + tm(w.pickedAt) + " ET at " + mc(w.entryMcap) + ' · <a href="' + esc(w.fomo) + '" target="_blank" rel="noopener">Open in fomo</a></div></div>').join("") : '<div class="empty">No winners decided yet</div>') + "</div>";
+          box.innerHTML = h;
+        } catch (e) { box.innerHTML = '<div class="panel"><div class="empty">Stats file looks incomplete. Try again in a minute.</div></div>'; }
       }
+
+      // ================= RACE 🫗 (runs fully in this page) =================
+      const KEY = "snipe.race.v2";
+      const J = "https://datapi.jup.ag/v1";
+      const JHOLD = "https://lite-api.jup.ag/ultra/v1/holdings/";
+      const WSOL = "So11111111111111111111111111111111111111112";
+      const RULES = { slip: 0.04, fee: 0.01, maxOpen: 4, size: { 1: 0.10, 2: 0.15, 3: 0.20, 4: 0.25, 5: 0.30 }, stop: -0.30, tp: 1.0, trailArm: 0.5, trailDrop: 0.25, maxHoldMin: 90,
+        tickMs: 12000, scanMs: 24000, maxEntriesPerScan: 1, minConv: 3, skipCooldownMin: 10, rugMisses: 3, walletMs: 60000 };
+      const R = { st: null, busy: false, lastScanAt: 0, nextTickAt: 0, timer: null, netErr: 0, walletBusy: false, lastWalletAt: 0, uiBuilt: false };
+      window.__race = R;
+
+      function save() { try { localStorage.setItem(KEY, JSON.stringify(R.st)); } catch (e) {} }
+      function load() { try { const s = JSON.parse(localStorage.getItem(KEY) || "null"); return s && s.id ? s : null; } catch (e) { return null; } }
+      function exitVal(qty, px) { return qty * (px || 0) * (1 - RULES.slip) * (1 - RULES.fee); }
+      function botEquity(st) { return st.cash + st.open.reduce((a, p) => a + exitVal(p.qty, p.lastPrice), 0); }
+      function userPnl(st) { const u = st.user; return u.balance == null ? 0 : u.balance - u.start; }
+      function feed(text, kind) {
+        const st = R.st; if (!st) return;
+        st.fseq = (st.fseq || 0) + 1;
+        st.feed.unshift({ id: st.fseq, t: Date.now(), text, kind: kind || "" });
+        if (st.feed.length > 60) st.feed.length = 60;
+      }
+
+      async function fetchJson(url, opts) {
+        let lastErr;
+        for (let i = 0; i < 2; i++) {
+          const ctl = new AbortController(); const to = setTimeout(() => ctl.abort(), 12000);
+          try {
+            const r = await fetch(url, Object.assign({ signal: ctl.signal }, opts || {}));
+            clearTimeout(to);
+            if (r.status === 429) { lastErr = new Error("rate limited"); await new Promise((z) => setTimeout(z, 1500)); continue; }
+            if (!r.ok) throw new Error("HTTP " + r.status);
+            return await r.json();
+          } catch (e) { clearTimeout(to); lastErr = e; await new Promise((z) => setTimeout(z, 600)); }
+        }
+        throw lastErr;
+      }
+      async function jupAssets(mints) {
+        const out = {};
+        for (let i = 0; i < mints.length; i += 20) {
+          const arr = await fetchJson(J + "/assets/search?query=" + mints.slice(i, i + 20).join(","));
+          (Array.isArray(arr) ? arr : []).forEach((a) => {
+            const au = a.audit || {}, bs = au.bundlerStats || {};
+            out[a.id] = { price: nn(a.usdPrice), mcap: nn(a.mcap), holders: nn(a.holderCount), organic: nn(a.organicScore), organicLabel: a.organicScoreLabel || "",
+              top10: nn(au.topHoldersPercentage), sniper: nn(au.sniperPct ?? au.snipersHoldingPercentage), insider: nn(au.insiderPct ?? au.insidersHoldingPercentage),
+              bots: nn(au.botHoldersPercentage), bundle: nn(bs.holdingPct ?? bs.holdingPercentage), dev: nn(au.devBalancePercentage), devMints: nn(au.devMints),
+              mintOff: au.mintAuthorityDisabled ?? null, freezeOff: au.freezeAuthorityDisabled ?? null,
+              twitter: a.twitter || null, website: a.website || null, telegram: a.telegram || null, launchpad: a.launchpad || null,
+              ptw: a.primaryTwitter || null, netBuyers1h: nn(a.stats1h && a.stats1h.numNetBuyers), traders1h: nn(a.stats1h && a.stats1h.numTraders) };
+          });
+        }
+        return out;
+      }
+      async function jupFlow(mint) {
+        const d = await fetchJson(J + "/txs/" + mint + "?limit=100");
+        const f = { smBuys: 0, smSells: 0, whaleBuys: 0, whaleSells: 0, taggedSells: 0, n: 0 };
+        (d.txs || []).forEach((t) => {
+          f.n++; const c = t.walletCategories || [], tg = t.holderTags || [], buy = t.type === "buy";
+          if (c.includes("smartMoney")) buy ? f.smBuys++ : f.smSells++;
+          if (c.includes("whale")) buy ? f.whaleBuys++ : f.whaleSells++;
+          if (!buy && tg.some((x) => x === "sniper" || x === "insider" || x === "bundler")) f.taggedSells++;
+        });
+        return f;
+      }
+
+      // ---------- thesis / skip logic ----------
+      const THEMES = [[/\b(ai|agent|gpt|llm|bot)\b/i, "AI / agents"], [/(dog|doge|inu|shib|pup)/i, "dog meme"], [/\b(cat|kitty|meow)\b/i, "cat meme"], [/(pepe|frog)/i, "frog / Pepe"],
+        [/(trump|biden|maga|elect|politic|president)/i, "politics"], [/(elon|musk|tesla|spacex)/i, "Elon"], [/(alien|ufo|space|moon|mars)/i, "space / aliens"],
+        [/(anime|waifu|chan\b)/i, "anime"], [/(game|gaming|play)/i, "gaming"], [/(btc|bitcoin|eth|sol\b|solana)/i, "crypto-native"], [/(news|breaking|viral|tiktok|trend)/i, "viral / news"]];
+      function theme(c) {
+        const txt = [c.pair.baseToken.name, c.pair.baseToken.symbol, c.meta.desc].join(" ");
+        const hit = THEMES.find((t) => t[0].test(txt));
+        return hit ? hit[1] : null;
+      }
+      function links(c, j) {
+        const out = []; const L = (c.meta && c.meta.links) || [];
+        const find = (re) => { const l = L.find((x) => re.test(String(x.type || x.label || "") + " " + String(x.url || ""))); return l && l.url; };
+        const tw = (j && j.twitter) || find(/twitter|x\.com/i), web = (j && j.website) || find(/website/i), tg = (j && j.telegram) || find(/telegram|t\.me/i);
+        if (tw) out.push(["X", tw]); if (web && web !== tw) out.push(["site", web]); if (tg) out.push(["telegram", tg]);
+        return out;
+      }
+      function flowOf(p) {
+        const t5 = (p.txns && p.txns.m5) || {}, t1 = (p.txns && p.txns.h1) || {};
+        const b5 = +t5.buys || 0, s5 = +t5.sells || 0, b1 = +t1.buys || 0, s1 = +t1.sells || 0;
+        const m = +p.marketCap || +p.fdv || 0;
+        return { b5, s5, b1, s1, r5: s5 ? b5 / s5 : b5 ? 3 : 1, v5: (p.volume && +p.volume.m5) || 0, v1: (p.volume && +p.volume.h1) || 0, mcap: m,
+          c5: nn(p.priceChange && p.priceChange.m5), c1: nn(p.priceChange && p.priceChange.h1), liq: p.liquidity ? +p.liquidity.usd || 0 : null, age: Date.now() - (+p.pairCreatedAt || Date.now()) };
+      }
+      function safetyFlags(j) {
+        const w = [];
+        if (!j) return w;
+        if (j.mintOff === false) w.push("mint authority still on");
+        if (j.freezeOff === false) w.push("freeze authority still on");
+        if (j.top10 > 40) w.push("top 10 hold " + Math.round(j.top10) + "%");
+        if (j.bots > 70) w.push("bots hold " + Math.round(j.bots) + "%");
+        if (j.sniper > 25) w.push("snipers hold " + Math.round(j.sniper) + "%");
+        if (j.bundle > 15) w.push("bundlers hold " + Math.round(j.bundle) + "%");
+        if (j.dev > 10) w.push("dev holds " + Math.round(j.dev) + "%");
+        return w;
+      }
+      function flowGate(f) {
+        if (f.c1 != null && f.c1 > 500) return "already ran " + Math.round(f.c1) + "% in 1h, too late to chase";
+        if (f.c5 != null && f.c5 > 150) return "spiked " + Math.round(f.c5) + "% in 5m, waiting for a pullback";
+        if (f.c5 != null && f.c5 < -20) return "dumping " + Math.round(f.c5) + "% in last 5m";
+        if (f.b5 + f.s5 < 6) return "almost no trades in the last 5m (" + (f.b5 + f.s5) + ")";
+        if (f.b5 + f.s5 >= 10 && f.r5 < 1) return "sellers in control (5m " + f.b5 + " buys / " + f.s5 + " sells)";
+        return null;
+      }
+      function conviction(c, f, j, fl) {
+        let pts = 0; const why = [];
+        if (c.score >= 70) { pts += 2; why.push("scanner score " + c.score); } else if (c.score >= 50) { pts += 1; why.push("scanner score " + c.score); }
+        if (f.r5 >= 1.5) { pts += 1; why.push(f.r5.toFixed(1) + "x buy pressure"); }
+        if (f.mcap && f.v5 / f.mcap >= 0.1) { pts += 0.5; why.push("5m vol " + Math.round(f.v5 / f.mcap * 100) + "% of MC"); }
+        if (fl && fl.smBuys > fl.smSells && fl.smBuys > 0) { pts += 1; why.push(fl.smBuys + " smart-money buys"); }
+        if (fl && fl.whaleBuys > fl.whaleSells && fl.whaleBuys > 0) { pts += 0.5; why.push("whales buying"); }
+        if ((c.meta.desc || "").trim() || links(c, j).length) { pts += 0.5; why.push("has narrative/socials"); }
+        if (j && j.ptw && j.ptw.followerCount >= 5000) { pts += 0.5; why.push("linked X @" + j.ptw.handle + " " + Math.round(j.ptw.followerCount / 1000) + "k followers"); }
+        if (j && j.holders >= 150) pts += 0.5;
+        if (j && j.organic >= 50) pts += 0.5;
+        const minus = [];
+        if (j && j.devMints >= 200) { pts -= 1.5; minus.push("serial deployer (" + j.devMints + " launches)"); } else if (j && j.devMints >= 20) { pts -= 0.5; minus.push("dev has launched " + j.devMints + " tokens"); }
+        if (fl && fl.taggedSells >= 10) { pts -= 1; minus.push(fl.taggedSells + " sniper/insider sells in last 100 trades"); }
+        if (fl && fl.smSells > fl.smBuys) { pts -= 1; minus.push("smart money selling"); }
+        const conv = Math.max(1, Math.min(5, Math.round(pts)));
+        return { conv, why, minus };
+      }
+      function thesisText(c, f, j, fl, cv, cost) {
+        const p = c.pair, sym = String(p.baseToken.symbol || "").replace(/^\$+/, ""), th = theme(c), L = links(c, j);
+        const desc = String(c.meta.desc || "").replace(/\s+/g, " ").trim();
+        const lines = [];
+        let n = "Narrative: " + p.baseToken.name + " ($" + sym + ")" + (th ? ", " + th + " theme" : "") + ". ";
+        n += desc ? '"' + (desc.length > 150 ? desc.slice(0, 149) + "…" : desc) + '" ' : "No description. ";
+        if (j && j.ptw && j.ptw.handle) n += "Linked X @" + j.ptw.handle + (j.ptw.followerCount ? " (" + j.ptw.followerCount.toLocaleString() + " followers)" : "") + ". ";
+        n += L.length ? "Links: " + L.map((x) => x[0]).join(", ") + "." : "No socials.";
+        lines.push(n);
+        lines.push("Flow: " + mc(f.mcap) + " MC, " + (c.bonding ? "still on bonding curve" : "liq " + mc(f.liq)) + ", age " + Math.round(f.age / 60000) + "m. 5m " + f.b5 + " buys / " + f.s5 + " sells, vol 5m " + mc(f.v5) + " / 1h " + mc(f.v1) + ", price 5m " + pctS(f.c5) + " / 1h " + pctS(f.c1) + "." +
+          (fl ? " Last " + fl.n + " trades: smart money " + fl.smBuys + " buys / " + fl.smSells + " sells, whales " + fl.whaleBuys + "/" + fl.whaleSells + "." : ""));
+        if (j) lines.push("Safety: " + [j.holders != null && j.holders + " holders", j.top10 != null && "top10 " + Math.round(j.top10) + "%", j.sniper != null && "snipers " + Math.round(j.sniper) + "%", j.insider != null && "insiders " + Math.round(j.insider) + "%",
+          j.bundle != null && "bundlers " + Math.round(j.bundle) + "%", j.bots != null && "bots " + Math.round(j.bots) + "%", j.dev != null && "dev " + j.dev.toFixed(1) + "%",
+          (j.mintOff && j.freezeOff) ? "mint+freeze off" : null, j.organic != null && "organic " + Math.round(j.organic)].filter(Boolean).join(" · ") + ".");
+        else lines.push("Safety: Jupiter stats unavailable for this coin, so sizing small.");
+        lines.push("Why: " + (cv.why.length ? cv.why.join(", ") : "decent setup") + "." + (cv.minus.length ? " Risks: " + cv.minus.join(", ") + "." : ""));
+        lines.push("Plan: conviction " + cv.conv + "/5 → " + usd(cost) + ". Stop -30%, take profit +100%, trail after +50%, out by 90m.");
+        return lines.join("\n");
+      }
+
+      // ---------- engine ----------
+      function newRace(budget, goal, durMs, wallet) {
+        const now = Date.now();
+        R.st = { id: "r" + now, status: "running", budget, goal, start: now, end: now + durMs, cash: budget, open: [], closed: [], skipped: [], traded: [], equity: [{ t: now, v: budget }],
+          user: { start: budget, balance: null, wallet: wallet || "", hist: [{ t: now, v: budget }], walletErr: "", walletStartPending: !!wallet }, feed: [],
+          scans: 0, checked: 0, lastTick: now, gaps: [], winner: null, endNote: "" };
+        R.lastScanAt = 0;
+        feed("Race on: " + usd(budget) + " → " + usd(goal) + " by " + tm(now + durMs) + " ET. 🫗 is scanning.", "buy");
+        save();
+      }
+      function closePos(p, px, reason, now) {
+        const st = R.st, proceeds = exitVal(p.qty, px);
+        st.cash += proceeds;
+        st.open = st.open.filter((x) => x !== p);
+        const c = Object.assign({}, p, { exitTime: now, exitPrice: px, proceeds: r2(proceeds), pnlUsd: r2(proceeds - p.cost), pnlPct: r2((proceeds / p.cost - 1) * 100), exitReason: reason });
+        st.closed.push(c);
+        feed("SOLD $" + p.sym + " · " + reason + " · " + sgn(c.pnlUsd) + " (" + pctS(c.pnlPct) + ")", c.pnlUsd >= 0 ? "sell-up" : "sell-down");
+      }
+      async function priceOpen(now) {
+        const st = R.st; if (!st.open.length) return;
+        const mints = st.open.map((p) => p.mint);
+        let q = {};
+        try { q = await window.__snipe.quotes(mints); } catch (e) { R.netErr++; }
+        const missing = mints.filter((m) => !(q[m] && q[m].price > 0));
+        if (missing.length) {
+          try { const ja = await jupAssets(missing); missing.forEach((m) => { if (ja[m] && ja[m].price > 0) q[m] = { price: ja[m].price, mcap: ja[m].mcap, liq: null, src: "jup" }; }); } catch (e) {}
+        }
+        const active = now < st.end;
+        st.open.slice().forEach((p) => {
+          const x = q[p.mint];
+          if (x && x.price > 0) { p.miss = 0; p.lastPrice = x.price; p.lastMcap = x.mcap || p.lastMcap; p.lastAt = now; }
+          else { p.miss = (p.miss || 0) + 1; if (p.miss >= RULES.rugMisses) { closePos(p, 0, "rug: price vanished", now); return; } }
+          if (x && x.liq != null && !p.bonding && x.liq < 150) { closePos(p, 0, "rug: liquidity pulled", now); return; }
+          const g = p.lastPrice / p.entryPx - 1;
+          p.peak = Math.max(p.peak || 0, g);
+          const held = (now - p.entryTime) / 60000;
+          if (!active) closePos(p, p.lastPrice, "race over", now);
+          else if (g <= RULES.stop) closePos(p, p.lastPrice, "stop loss -30%", now);
+          else if (g >= RULES.tp) closePos(p, p.lastPrice, "take profit +100%", now);
+          else if (p.peak >= RULES.trailArm && g <= p.peak - RULES.trailDrop) closePos(p, p.lastPrice, "trailing stop (peak " + pctS(p.peak * 100) + ")", now);
+          else if (held >= RULES.maxHoldMin) closePos(p, p.lastPrice, "90 min max hold", now);
+        });
+      }
+      async function hunt(now) {
+        const st = R.st;
+        R.lastScanAt = now;
+        const slots = RULES.maxOpen - st.open.length;
+        const { cands, checked } = await window.__snipe.discover();
+        st.scans++; st.checked += checked;
+        if (slots <= 0 || st.cash < 0.5) { feed("Scan #" + st.scans + ": checked " + checked + " coins · " + (slots <= 0 ? "4/4 slots full, managing positions" : "no cash left")); return; }
+        const cool = RULES.skipCooldownMin * 60000;
+        const pool = cands.filter((c) => {
+          const m = c.pair.baseToken.address;
+          if (st.traded.includes(m)) return false;
+          const sk = st.skipped.find((s) => s.mint === m);
+          return !(sk && now - sk.t < cool);
+        }).slice(0, 12);
+        if (!pool.length) { feed("Scan #" + st.scans + ": checked " + checked + " coins · " + cands.length + " passed filters, nothing new to look at"); return; }
+        let ja = {};
+        try { ja = await jupAssets(pool.map((c) => c.pair.baseToken.address)); } catch (e) { feed("Jupiter safety data unavailable this scan, being careful", "warn"); }
+        let opened = 0, passed = 0, deep = 0;
+        const viable = [];
+        const skip = (c, f, reason) => { const m = c.pair.baseToken.address; passed++; st.skipped = st.skipped.filter((s) => s.mint !== m); st.skipped.unshift({ mint: m, sym: String(c.pair.baseToken.symbol || "").replace(/^\$+/, "") || m.slice(0, 4), name: c.pair.baseToken.name, t: now, reason, mcap: f.mcap }); if (st.skipped.length > 30) st.skipped.length = 30; };
+        for (const c of pool) {
+          const m = c.pair.baseToken.address, j = ja[m] || null, f = flowOf(c.pair);
+          const flags = safetyFlags(j);
+          if (flags.length) { skip(c, f, "Safety: " + flags.join(", ") + "."); continue; }
+          const g = flowGate(f);
+          if (g) { skip(c, f, "Flow: " + g + "."); continue; }
+          if (!(+c.pair.priceUsd > 0)) { skip(c, f, "No reliable price."); continue; }
+          if (j && j.holders != null && j.holders < 40) { skip(c, f, "Only " + j.holders + " holders, too thin to trust the numbers."); continue; }
+          viable.push({ c, f, j, fl: null });
+        }
+        for (const v of viable) {
+          if (deep < 3) { deep++; try { v.fl = await jupFlow(v.c.pair.baseToken.address); } catch (e) {} }
+          v.cv = conviction(v.c, v.f, v.j, v.fl);
+          if (!v.j) v.cv.conv = Math.min(v.cv.conv, 2);
+        }
+        viable.sort((x, y) => (y.cv.conv - x.cv.conv) || (y.c.score - x.c.score));
+        for (const v of viable) {
+          const { c, f, j, fl, cv } = v, m = c.pair.baseToken.address, sym = String(c.pair.baseToken.symbol || "").replace(/^\$+/, "") || m.slice(0, 4);
+          if (cv.conv < RULES.minConv) { skip(c, f, "Low conviction (" + cv.conv + "/5)" + (cv.minus.length ? ": " + cv.minus.join(", ") : ": numbers are OK but nothing stands out") + "."); continue; }
+          if (opened >= RULES.maxEntriesPerScan || st.open.length >= RULES.maxOpen || st.cash < 0.5) continue;
+          const cost = r2(Math.min(st.cash, st.budget * RULES.size[cv.conv]));
+          if (cost < 0.5) continue;
+          const px = +c.pair.priceUsd, fill = px * (1 + RULES.slip), qty = (cost * (1 - RULES.fee)) / fill;
+          st.cash = r2(st.cash - cost);
+          st.traded.push(m);
+          st.open.push({ mint: m, sym, name: c.pair.baseToken.name, entryTime: now, entryPx: px, qty, cost, conv: cv.conv, entryMcap: f.mcap, lastPrice: px, lastMcap: f.mcap, peak: 0, miss: 0, bonding: c.bonding,
+            mode: c.mode, thesis: thesisText(c, f, j, fl, cv, cost), links: links(c, j), fomo: "https://fomo.family/tokens/solana/" + m, dex: c.pair.url || "https://dexscreener.com/solana/" + m });
+          opened++;
+          feed("BOUGHT $" + sym + " · " + usd(cost) + " at " + mc(f.mcap) + " MC · conviction " + cv.conv + "/5", "buy");
+        }
+        feed("Scan #" + st.scans + ": checked " + checked + " coins · " + cands.length + " passed filters · looked at " + (opened + passed) + " · opened " + opened + " · passed " + passed);
+      }
+      function checkEnd(now) {
+        const st = R.st, goalPnl = st.goal - st.budget;
+        const be = botEquity(st), bp = be - st.budget, up = userPnl(st);
+        let reason = null;
+        if (bp >= goalPnl) reason = "🫗 hit the " + usd(st.goal) + " goal";
+        else if (st.user.balance != null && up >= goalPnl) reason = "You hit the " + usd(st.goal) + " goal";
+        else if (st.stopped) reason = "Stopped early";
+        else if (now >= st.end) reason = "Time's up";
+        if (!reason) return false;
+        st.open.slice().forEach((p) => closePos(p, p.lastPrice, "race over", now));
+        const fb = botEquity(st) - st.budget;
+        st.status = "ended"; st.endedAt = now; st.endNote = reason;
+        st.winner = /You hit/.test(reason) ? "you" : /🫗 hit/.test(reason) ? "bot" : Math.abs(fb - up) < 0.01 ? "tie" : fb > up ? "bot" : "you";
+        feed("Race over: " + reason + ". " + (st.winner === "bot" ? "🫗 wins" : st.winner === "you" ? "You win" : "Tie") + " (🫗 " + sgn(fb) + " vs you " + sgn(up) + ")", "buy");
+        if (navigator.vibrate) try { navigator.vibrate([60, 60, 60]); } catch (e) {}
+        return true;
+      }
+      function sampleEquity(now) {
+        const st = R.st, v = r2(botEquity(st)), last = st.equity[st.equity.length - 1];
+        if (!last || now - last.t >= 10000) st.equity.push({ t: now, v }); else last.v = v;
+        if (st.equity.length > 500) st.equity = st.equity.filter((_, i) => i % 2 === 0 || i === st.equity.length - 1);
+      }
+      async function tick(reason) {
+        const st = R.st;
+        if (!st || st.status !== "running" || R.busy) return;
+        R.busy = true; setStatus();
+        const now = Date.now();
+        try {
+          if (now - st.lastTick > 60000) {
+            const gapFrom = st.lastTick, gapTo = Math.min(now, st.end);
+            if (gapTo > gapFrom) { st.gaps.push({ from: gapFrom, to: gapTo }); feed("Page was closed " + Math.round((gapTo - gapFrom) / 60000) + " min (" + tm(gapFrom) + "–" + tm(gapTo) + " ET). 🫗 didn't trade then. Repricing now.", "warn"); }
+          }
+          st.lastTick = now;
+          await priceOpen(now);
+          if (!checkEnd(now)) {
+            if (now - R.lastScanAt >= RULES.scanMs - 500) await hunt(now);
+            sampleEquity(Date.now());
+            checkEnd(Date.now());
+          } else sampleEquity(now);
+          R.netErr = 0;
+        } catch (e) {
+          R.netErr++;
+          feed("Network hiccup (" + (e && e.message || "error") + "), retrying in " + Math.round(RULES.tickMs / 1000) + "s", "warn");
+          console.warn("race tick", e);
+        } finally {
+          if (R.st === st) { st.lastTick = Math.max(st.lastTick, Date.now()); save(); }
+          R.busy = false; R.nextTickAt = Date.now() + RULES.tickMs;
+          paintAll();
+        }
+      }
+      async function walletTick(force) {
+        const st = R.st; if (!st || !st.user.wallet || R.walletBusy) return;
+        if (!force && Date.now() - R.lastWalletAt < RULES.walletMs) return;
+        R.walletBusy = true; R.lastWalletAt = Date.now();
+        try {
+          const h = await fetchJson(JHOLD + encodeURIComponent(st.user.wallet));
+          const sol = +h.uiAmount || 0, amts = {};
+          Object.entries(h.tokens || {}).forEach(([m, accs]) => { (accs || []).forEach((a) => { if (!a.excludeFromNetWorth && +a.uiAmount > 0) amts[m] = (amts[m] || 0) + +a.uiAmount; }); });
+          const mints = Object.keys(amts).slice(0, 80);
+          const px = await jupAssets([WSOL].concat(mints.filter((m) => m !== WSOL)));
+          let v = sol * ((px[WSOL] && px[WSOL].price) || 0);
+          mints.forEach((m) => { const p = px[m] && px[m].price; if (p > 0) v += amts[m] * p; });
+          if (!(px[WSOL] && px[WSOL].price > 0)) throw new Error("no SOL price");
+          v = r2(v);
+          if (R.st !== st) return;
+          if (st.user.walletStartPending) { st.user.start = v; st.user.walletStartPending = false; st.user.hist = [{ t: st.start, v }]; feed("Tracking your wallet: starting value " + usd(v), ""); }
+          setUserBalance(v, "wallet");
+          st.user.walletErr = "";
+        } catch (e) { st.user.walletErr = "Couldn't read wallet (" + (e.message || "error") + "), retrying. You can type your balance instead."; }
+        finally { R.walletBusy = false; save(); paintAll(); }
+      }
+      function setUserBalance(v, src) {
+        const st = R.st; if (!st) return;
+        st.user.balance = r2(v); st.user.updatedAt = Date.now(); st.user.src = src;
+        const last = st.user.hist[st.user.hist.length - 1];
+        if (last && Date.now() - last.t < 10000) last.v = st.user.balance; else st.user.hist.push({ t: Date.now(), v: st.user.balance });
+        if (st.status === "running") checkEnd(Date.now());
+        save(); paintAll();
+      }
+      function loop() {
+        clearInterval(R.timer);
+        R.timer = setInterval(() => {
+          const st = R.st;
+          paintClock();
+          if (!st || st.status !== "running") return;
+          if (Date.now() >= st.end && !R.busy) { tick("end"); return; }
+          if (!R.busy && Date.now() >= R.nextTickAt) tick("loop");
+          if (st.user.wallet) walletTick(false);
+          if (!R.busy) setStatus();
+        }, 1000);
+      }
+      document.addEventListener("visibilitychange", () => { if (!document.hidden && R.st && R.st.status === "running") { R.lastScanAt = 0; tick("visible"); walletTick(true); } });
+      window.addEventListener("pageshow", (e) => { if (e.persisted && R.st && R.st.status === "running") tick("pageshow"); });
+
+      // ---------- UI (built once, updated in place: no flicker) ----------
+      const $ = (id) => document.getElementById(id);
+      function setText(el, t) { if (el && el.textContent !== t) el.textContent = t; }
+      function setCls(el, c) { if (el && el.className !== c) el.className = c; }
+      function paintClock() {
+        const st = R.st; if (!st) return;
+        const el = $("rb-clock");
+        if (st.status !== "running") return;
+        const ms = Math.max(0, st.end - Date.now());
+        const h = Math.floor(ms / 3600e3), m = Math.floor((ms % 3600e3) / 60e3), s = Math.floor((ms % 60e3) / 1000);
+        setText(el, [h, m, s].map((n) => String(n).padStart(2, "0")).join(":"));
+      }
+      function setStatus() {
+        const st = R.st, el = $("rb-status"); if (!st || !el) return;
+        let html;
+        if (st.status !== "running") html = "Race finished " + tm(st.endedAt) + " ET.";
+        else if (R.busy) html = '<span class="pulse"></span>🫗 scanning… ' + st.checked + " coins checked so far, " + st.traded.length + " bought";
+        else html = '<span class="pulse"></span>🫗 live · next check in ' + Math.max(0, Math.ceil((R.nextTickAt - Date.now()) / 1000)) + "s · " + st.scans + " scans, " + st.checked + " coins checked, " + st.traded.length + " bought";
+        if (el.innerHTML !== html) el.innerHTML = html;
+        setCls(el, "feed-status" + (R.netErr && st.status === "running" ? " err" : ""));
+      }
+      function tradeNode(key) {
+        const d = document.createElement("div"); d.className = "trade"; d.dataset.key = key;
+        d.innerHTML = '<div class="trade-head"><b class="t-sym"></b><span class="pnl"></span></div><div class="sub t-sub"></div><div class="bar"><i></i></div><details><summary>Thesis</summary><p class="t-thesis"></p><p class="sub t-links"></p></details>';
+        return d;
+      }
+      function linksHtml(p) {
+        return ['<a href="' + esc(p.fomo) + '" target="_blank" rel="noopener">Open in fomo</a>', '<a href="' + esc(p.dex) + '" target="_blank" rel="noopener">DexScreener</a>']
+          .concat((p.links || []).map((l) => '<a href="' + esc(l[1]) + '" target="_blank" rel="noopener">' + esc(l[0]) + "</a>")).join(" · ");
+      }
+      function reconcile(box, items, keyOf, make, update) {
+        const have = {}; Array.from(box.children).forEach((n) => (have[n.dataset.key] = n));
+        const keep = {};
+        items.forEach((it, i) => {
+          const k = keyOf(it); keep[k] = 1;
+          let n = have[k]; if (!n) { n = make(k, it); }
+          update(n, it);
+          if (box.children[i] !== n) box.insertBefore(n, box.children[i] || null);
+        });
+        Object.keys(have).forEach((k) => { if (!keep[k]) have[k].remove(); });
+      }
+      function sparkPaths(st) {
+        const now = Math.min(Date.now(), st.status === "running" ? Date.now() : st.endedAt || Date.now());
+        const t0 = st.start, t1 = Math.max(st.status === "running" ? st.end : now, t0 + 1);
+        const bp = st.equity.map((e) => ({ t: e.t, v: e.v - st.budget }));
+        const up = st.user.hist.map((e) => ({ t: e.t, v: e.v - st.user.start }));
+        if (st.user.balance != null && up.length) up.push({ t: now, v: up[up.length - 1].v });
+        const vals = bp.concat(up).map((x) => x.v).concat([0, st.goal - st.budget]);
+        const lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals);
+        const X = (t) => ((t - t0) / (t1 - t0)) * 300, Y = (v) => 56 - ((v - lo) / (hi - lo || 1)) * 52;
+        const path = (pts, step) => pts.map((p, i) => (i ? (step ? "H" + X(p.t).toFixed(1) + " V" : "L" + X(p.t).toFixed(1) + " ") + Y(p.v).toFixed(1) : "M" + X(p.t).toFixed(1) + " " + Y(p.v).toFixed(1))).join(" ");
+        return { bot: bp.length > 1 ? path(bp) : "", me: up.length > 1 ? path(up, true) : "", base: Y(0), goal: Y(st.goal - st.budget) };
+      }
+      function paintAll() {
+        paintBar();
+        const st = R.st;
+        const showBoard = !!st;
+        $("race-setup").hidden = showBoard && st.status === "running";
+        $("race-board").hidden = !showBoard;
+        if (!st) return;
+        const running = st.status === "running";
+        $("r-stop").hidden = !running; $("r-new").hidden = running;
+        if (!running) $("race-setup").hidden = true;
+        // banner / timer
+        const ban = $("rb-banner"); ban.hidden = running;
+        if (!running) setText(ban, (st.winner === "bot" ? "🫗 wins this one" : st.winner === "you" ? "🧍 You win!" : "Tie") + " · " + st.endNote);
+        $("rb-timer").hidden = !running; paintClock();
+        const be = botEquity(st), bp = be - st.budget, up = userPnl(st), goalPnl = st.goal - st.budget;
+        const prog = (p) => Math.max(4, Math.min(95, goalPnl > 0 ? 4 + (Math.max(p, 0) / goalPnl) * 91 : 50));
+        const rb = $("run-bot"), rm = $("run-me");
+        const lb = prog(bp).toFixed(1) + "%", lm = prog(up).toFixed(1) + "%";
+        if (rb.style.left !== lb) rb.style.left = lb; if (rm.style.left !== lm) rm.style.left = lm;
+        setText($("run-bot-lbl"), sgn(bp)); setText($("run-me-lbl"), st.user.balance == null ? "?" : sgn(up));
+        const bpEl = $("sb-bot-pnl"); setText(bpEl, sgn(bp)); setCls(bpEl, cls(bp));
+        setText($("sb-bot-sub"), usd(be) + " · " + pctS(bp / st.budget * 100) + " · cash " + usd(st.cash));
+        const mpEl = $("sb-me-pnl"); setText(mpEl, st.user.balance == null ? "—" : sgn(up)); setCls(mpEl, cls(up));
+        setText($("sb-me-sub"), st.user.balance == null ? "enter your balance below" : usd(st.user.balance) + " · " + pctS(up / st.user.start * 100) + " · " + tm(st.user.updatedAt) + " ET");
+        setText($("rb-meta"), "Start " + usd(st.budget) + " · Goal " + usd(st.goal) + " · " + tm(st.start) + "–" + tm(st.end) + " ET");
+        const sp = sparkPaths(st);
+        $("sp-bot").setAttribute("d", sp.bot); $("sp-me").setAttribute("d", sp.me);
+        ["y1", "y2"].forEach((a) => { $("sp-base").setAttribute(a, sp.base.toFixed(1)); $("sp-goal").setAttribute(a, sp.goal.toFixed(1)); });
+        $("me-row").hidden = !running;
+        setText($("me-note"), st.user.wallet ? (st.user.walletErr || "Auto-tracking wallet " + st.user.wallet.slice(0, 4) + "…" + st.user.wallet.slice(-4) + " every 60s" + (st.user.walletStartPending ? " (reading starting value…)" : "") + ". You can still type a balance.") : "Started at " + usd(st.user.start) + ". Type what your fomo balance shows now and hit UPDATE.");
+        // feed + gap
+        setStatus();
+        const gapMin = st.gaps.reduce((a, g) => a + (g.to - g.from), 0) / 60000;
+        const gEl = $("rb-gap"); gEl.hidden = !st.gaps.length;
+        if (st.gaps.length) setText(gEl, "⏸ 🫗 was paused " + Math.round(gapMin) + " min total while this page was closed (" + st.gaps.map((g) => tm(g.from) + "–" + tm(g.to)).join(", ") + " ET). Exits during a pause happen at the price when you came back.");
+        reconcile($("rb-feed"), st.feed.slice(0, 40), (f) => "f" + (f.id || f.t), (k, f) => { const li = document.createElement("li"); li.dataset.key = k; li.className = f.kind; li.innerHTML = "<time>" + tms(f.t) + "</time>" + esc(f.text); return li; }, () => {});
+        // open positions
+        setText($("h-open"), "🫗 Open positions (" + st.open.length + "/" + RULES.maxOpen + ")");
+        $("rb-open-empty").hidden = !!st.open.length;
+        setText($("rb-open-empty"), running ? "Hunting… none open yet" : "None");
+        reconcile($("rb-open"), st.open, (p) => "o" + p.mint, (k) => tradeNode(k), (n, p) => {
+          const val = exitVal(p.qty, p.lastPrice), pnl = val - p.cost, pct = (val / p.cost - 1) * 100, g = (p.lastPrice / p.entryPx - 1) * 100;
+          setText(n.querySelector(".t-sym"), "$" + p.sym);
+          const pe = n.querySelector(".pnl"); setText(pe, sgn(pnl) + " (" + pctS(pct) + ")"); setCls(pe, "pnl " + cls(pnl));
+          setText(n.querySelector(".t-sub"), "In " + usd(p.cost) + " at " + mc(p.entryMcap) + " → now " + mc(p.lastMcap) + " (" + pctS(g) + " price) · " + Math.round((Date.now() - p.entryTime) / 60000) + "m · " + tm(p.entryTime) + " ET" + (p.miss ? " · price missing " + p.miss + "x" : ""));
+          const bar = n.querySelector(".bar i"), w = Math.max(0, Math.min(100, ((g + 30) / 130) * 100)).toFixed(0) + "%";
+          if (bar.style.width !== w) bar.style.width = w; bar.style.background = g >= 0 ? "var(--green)" : "var(--red)";
+          setText(n.querySelector(".t-thesis"), p.thesis);
+          const lk = n.querySelector(".t-links"); const lh = linksHtml(p); if (lk.innerHTML !== lh) lk.innerHTML = lh;
+        });
+        // closed
+        setText($("h-closed"), "🫗 Closed (" + st.closed.length + ")" + (st.closed.length ? " · " + st.closed.filter((c) => c.pnlUsd > 0).length + " wins" : ""));
+        $("rb-closed-empty").hidden = !!st.closed.length;
+        reconcile($("rb-closed"), st.closed.slice().reverse(), (p) => "c" + p.mint + p.exitTime, (k) => { const n = tradeNode(k); n.querySelector(".bar").remove(); return n; }, (n, p) => {
+          setText(n.querySelector(".t-sym"), "$" + p.sym);
+          const pe = n.querySelector(".pnl"); setText(pe, sgn(p.pnlUsd) + " (" + pctS(p.pnlPct) + ")"); setCls(pe, "pnl " + cls(p.pnlUsd));
+          setText(n.querySelector(".t-sub"), tm(p.entryTime) + " → " + tm(p.exitTime) + " ET · " + usd(p.cost) + " in at " + mc(p.entryMcap) + " · " + p.exitReason);
+          setText(n.querySelector(".t-thesis"), p.thesis);
+          const lk = n.querySelector(".t-links"); const lh = linksHtml(p); if (lk.innerHTML !== lh) lk.innerHTML = lh;
+        });
+        // skipped
+        const sk = st.skipped.slice(0, 12);
+        $("rb-skipped-empty").hidden = !!sk.length;
+        reconcile($("rb-skipped"), sk, (s) => "s" + s.mint + s.t, (k) => { const d = document.createElement("div"); d.className = "trade"; d.dataset.key = k; d.innerHTML = '<div class="trade-head"><b class="t-sym"></b><span class="sub t-when"></span></div><div class="sub t-reason"></div>'; return d; }, (n, s) => {
+          setText(n.querySelector(".t-sym"), "$" + s.sym + (s.mcap ? " · " + mc(s.mcap) : ""));
+          setText(n.querySelector(".t-when"), tm(s.t) + " ET");
+          const r = n.querySelector(".t-reason"); const h = esc(s.reason) + ' · <a href="https://fomo.family/tokens/solana/' + esc(s.mint) + '" target="_blank" rel="noopener">fomo</a>'; if (r.innerHTML !== h) r.innerHTML = h;
+        });
+      }
+
+      // ---------- controls ----------
+      $("r-start").addEventListener("click", () => {
+        const b = parseFloat($("r-budget").value), g = parseFloat($("r-goal").value);
+        const h = parseFloat($("r-hours").value || "0"), m = parseFloat($("r-mins").value || "0");
+        const w = $("r-wallet").value.trim();
+        const err = $("r-err");
+        const durMs = ((isFinite(h) ? h : 0) * 60 + (isFinite(m) ? m : 0)) * 60000;
+        if (!(b > 0)) return setText(err, "Enter a budget.");
+        if (!(g > b)) return setText(err, "Goal has to be more than the budget.");
+        if (!(durMs >= 60000)) return setText(err, "Set a time of at least 1 minute.");
+        if (durMs > 48 * 3600e3) return setText(err, "Max 48 hours.");
+        if (w && !/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(w)) return setText(err, "That wallet address doesn't look right. Leave it blank to type your balance instead.");
+        setText(err, "");
+        try { localStorage.setItem("snipe.race.lastSetup", JSON.stringify({ b, g, h: $("r-hours").value, m: $("r-mins").value, w })); } catch (e) {}
+        newRace(b, g, durMs, w);
+        paintAll(); R.nextTickAt = 0; tick("start"); if (w) walletTick(true);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      });
+      $("r-stop").addEventListener("click", () => {
+        if (!R.st || R.st.status !== "running") return;
+        if (!confirm("Stop the race now? 🫗 sells everything at current prices and the race ends.")) return;
+        R.st.stopped = true; R.st.end = Math.min(R.st.end, Date.now());
+        tick("stop");
+      });
+      $("r-new").addEventListener("click", () => { $("race-setup").hidden = false; $("race-setup").scrollIntoView({ behavior: "smooth" }); });
+      $("me-upd").addEventListener("click", () => {
+        const v = parseFloat($("me-bal").value);
+        if (!(v >= 0)) { setText($("me-note"), "Type your balance in dollars, e.g. 22.40"); return; }
+        setUserBalance(v, "manual"); $("me-bal").value = ""; $("me-bal").blur();
+        feed("You updated your balance: " + usd(v) + " (" + sgn(v - R.st.user.start) + ")", "");
+      });
+      $("me-bal").addEventListener("keydown", (e) => { if (e.key === "Enter") $("me-upd").click(); });
+      try { const ls = JSON.parse(localStorage.getItem("snipe.race.lastSetup") || "null"); if (ls) { $("r-budget").value = ls.b || ""; $("r-goal").value = ls.g || ""; $("r-hours").value = ls.h || ""; $("r-mins").value = ls.m || ""; $("r-wallet").value = ls.w || ""; } } catch (e) {}
+
+      // ---------- boot: restore + catch up ----------
+      R.st = load();
+      if (R.st && R.st.status === "running") { R.nextTickAt = 0; R.lastScanAt = 0; setTimeout(() => { tick("resume"); walletTick(true); }, 50); }
+      loop();
+      paintAll();
       const hv = (location.hash || "").replace("#", "");
       if (views[hv]) show(hv); else paintBar();
-      window.__views = { show, loadRace, loadData };
+      window.__views = { show, loadData, paintAll, tick };
     })();
   </script>
 </body>
