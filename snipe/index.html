@@ -1732,9 +1732,9 @@
         for (const v of viable) {
           const { c, f, j, fl, cv, x } = v, m = c.pair.baseToken.address, sym = String(c.pair.baseToken.symbol || "").replace(/^\$+/, "") || m.slice(0, 4);
           if (cv.conv < minConv) { skip(c, f, "Low conviction (" + cv.conv + "/5" + (minConv > RULES.minConv ? ", needs " + minConv + " in " + sess.name + " hours" : "") + ")" + (cv.minus.length ? ": " + cv.minus.join(", ") : ": numbers are OK but nothing stands out") + ".", false, c.img); continue; }
-          if (opened >= RULES.maxEntriesPerScan || st.open.length >= RULES.maxOpen || st.cash < 0.5) continue;
-          const cost = r2(Math.min(st.cash, st.budget * RULES.size[cv.conv] * sz));
-          if (cost < 0.5) continue;
+          if (opened >= RULES.maxEntriesPerScan || st.open.length >= RULES.maxOpen || st.cash < 2) continue;
+          const cost = r2(Math.min(st.cash, Math.max(2, st.budget * RULES.size[cv.conv] * sz)));
+          if (cost < 2) continue; // $2 minimum per trade
           const px = +c.pair.priceUsd, fill = px * (1 + RULES.slip), qty = (cost * (1 - RULES.fee)) / fill;
           st.cash = r2(st.cash - cost);
           st.traded.push(m);
