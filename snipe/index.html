@@ -3,267 +3,261 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#0b0820" />
+  <meta name="theme-color" content="#0a0b0d" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="description" content="Pocket Solana coin sniper. Live DexScreener + Jupiter stats, rug filter, tracked wallets, open picks in fomo." />
-  <title>SNIPE 🫗</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎯</text></svg>" />
+  <title>Snipe 🫗</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🫗</text></svg>" />
   <link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@600;800;900&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --bg: #0b0820; --bg2: #150f33; --card: #1a1440; --card2: #221a52; --card-border: #2f2668; --text: #f6f3ff; --muted: #9d95c9;
-      --lime: #b6ff3b; --lime-dim: #8fd61f; --pink: #ff4fa3; --cyan: #3be8ff; --yellow: #ffd23b; --orange: #ff9a3b; --red: #ff4d6d; --green: #2bf59a; --blue: #7c8cff; --chip: #2a2160;
-      --display: "Lilita One", "Arial Rounded MT Bold", system-ui, sans-serif;
+      --bg: #0a0b0d; --s1: #121317; --s2: #17191e; --s3: #1e2027; --line: #24262d; --line2: #2e313a;
+      --text: #ececf1; --muted: #8b8f9a; --dim: #5d616c;
+      --accent: #8b8cf8; --accent-ink: #0d0d1a; --accent-soft: rgba(139,140,248,.12);
+      --green: #2fbf71; --green-soft: rgba(47,191,113,.12); --red: #ef4f5f; --red-soft: rgba(239,79,95,.12); --amber: #d9a441; --amber-soft: rgba(217,164,65,.12);
+      --r: 12px; --r2: 14px;
+      --font: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif;
+      /* legacy names used by inline styles in scripts */
+      --lime: var(--accent); --cyan: var(--accent); --pink: var(--accent); --yellow: var(--amber); --orange: var(--amber); --card-border: var(--line); --chip: var(--s3); --display: var(--font);
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { background: var(--bg); color: var(--text); font-family: Nunito, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; min-height: 100%; -webkit-tap-highlight-color: transparent; }
-    body { padding: calc(12px + env(safe-area-inset-top)) 14px calc(92px + env(safe-area-inset-bottom)); max-width: 480px; margin: 0 auto; overflow-x: hidden;
-      background: radial-gradient(600px 400px at 110% -10%, rgba(255,79,163,.22), transparent 60%), radial-gradient(500px 380px at -20% 10%, rgba(59,232,255,.16), transparent 60%), radial-gradient(700px 500px at 50% 120%, rgba(182,255,59,.10), transparent 60%), var(--bg); background-attachment: fixed; }
-    a { color: var(--cyan); }
-    header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-    .logo { font-family: var(--display); font-size: 30px; letter-spacing: .02em; line-height: 1; background: linear-gradient(90deg, var(--lime), var(--cyan) 55%, var(--pink)); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 2px 0 rgba(0,0,0,.4)); }
-    .mascot { font-size: 30px; animation: bob 2.4s ease-in-out infinite; display: inline-block; }
-    @keyframes bob { 0%,100% { transform: translateY(0) rotate(-6deg); } 50% { transform: translateY(-5px) rotate(6deg); } }
-    .hdr-right { margin-left: auto; text-align: right; font-size: 11px; color: var(--muted); font-weight: 800; line-height: 1.3; }
-    .pills { display: flex; gap: 6px; flex-wrap: wrap; margin: 0 0 12px; }
-    .pill { font-size: 11.5px; font-weight: 800; padding: 6px 10px; border-radius: 999px; background: var(--card); border: 1px solid var(--card-border); color: #ddd8ff; white-space: nowrap; }
-    .pill.good { border-color: #2d6b46; background: #10291f; color: var(--green); } .pill.weak { border-color: #6b4a2d; background: #2a1c10; color: var(--orange); }
-    .pill.whale { border-color: #2d4f6b; background: #0f2233; color: var(--cyan); }
+    html, body { background: var(--bg); color: var(--text); font-family: var(--font); font-size: 14px; line-height: 1.45; min-height: 100%; -webkit-tap-highlight-color: transparent; -webkit-font-smoothing: antialiased; font-feature-settings: "tnum" 1, "cv11" 1; }
+    body { padding: calc(16px + env(safe-area-inset-top)) 16px calc(88px + env(safe-area-inset-bottom)); max-width: 480px; margin: 0 auto; overflow-x: hidden; }
+    a { color: var(--accent); text-decoration: none; }
+    b, strong { font-weight: 600; }
+    header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+    .mascot { width: 32px; height: 32px; border-radius: 10px; background: var(--s2); border: 1px solid var(--line); display: grid; place-items: center; font-size: 18px; }
+    .logo { font-size: 17px; font-weight: 700; letter-spacing: -.01em; line-height: 1.1; }
+    header .sub { font-size: 12px; }
+    .hdr-right { margin-left: auto; text-align: right; white-space: nowrap; font-size: 12px; color: var(--muted); font-weight: 500; }
+    .pills { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 16px; }
+    .pill { font-size: 12px; font-weight: 500; padding: 4px 10px; border-radius: 999px; background: var(--s1); border: 1px solid var(--line); color: var(--muted); white-space: nowrap; }
+    .pill.good::before, .pill.weak::before { content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 6px; vertical-align: 1px; }
+    .pill.good::before { background: var(--green); } .pill.weak::before { background: var(--amber); }
+    .pill.whale { color: var(--muted); }
     /* bottom tab bar */
-    .modebar { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(10px + env(safe-area-inset-bottom)); width: min(460px, calc(100% - 20px)); z-index: 30; display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; padding: 6px; border-radius: 22px; background: rgba(21,15,51,.92); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid var(--card-border); box-shadow: 0 10px 40px rgba(0,0,0,.5); }
-    .modebar button { border: 0; background: transparent; color: var(--muted); border-radius: 16px; padding: 7px 2px 6px; font: 900 10.5px/1.1 Nunito, system-ui, sans-serif; letter-spacing: .06em; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 2px; position: relative; transition: background .15s, color .15s, transform .1s; }
-    .modebar button i { font-style: normal; font-size: 20px; line-height: 1.1; }
-    .modebar button:active { transform: scale(.94); }
-    .modebar button.on { color: #120c2b; background: linear-gradient(135deg, var(--lime), #e2ff7a); box-shadow: 0 4px 18px rgba(182,255,59,.35); }
-    .modebar button.lit::after { content: ""; position: absolute; top: 6px; right: 18%; width: 8px; height: 8px; border-radius: 50%; background: var(--pink); box-shadow: 0 0 0 0 rgba(255,79,163,.7); animation: ping 1.4s infinite; }
-    @keyframes ping { 0% { box-shadow: 0 0 0 0 rgba(255,79,163,.7); } 100% { box-shadow: 0 0 0 10px rgba(255,79,163,0); } }
+    .modebar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; display: grid; grid-template-columns: repeat(4, 1fr); padding: 6px max(8px, calc(50% - 232px)) calc(6px + env(safe-area-inset-bottom)); background: rgba(10,11,13,.92); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-top: 1px solid var(--line); }
+    .modebar button { border: 0; background: transparent; color: var(--dim); border-radius: 10px; padding: 8px 2px; font: 500 11px/1.2 var(--font); letter-spacing: .02em; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; position: relative; transition: color .15s; }
+    .modebar button i { font-style: normal; width: 18px; height: 18px; display: block; }
+    .modebar button i svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+    .modebar button.on { color: var(--text); }
+    .modebar button.on::before { content: ""; position: absolute; top: -7px; left: 32%; right: 32%; height: 2px; border-radius: 2px; background: var(--accent); }
+    .modebar button.lit::after { content: ""; position: absolute; top: 6px; right: 34%; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
     .view[hidden] { display: none !important; }
-    /* SNIPE button */
-    #snipe { position: relative; display: block; width: 100%; border: 0; border-radius: 26px; color: #120c2b; font-family: var(--display); font-size: 34px; letter-spacing: .1em; padding: 20px 16px; cursor: pointer; overflow: hidden;
-      background: linear-gradient(135deg, var(--lime) 0%, #e8ff8a 45%, var(--cyan) 100%); box-shadow: 0 6px 0 #5f9a12, 0 14px 40px rgba(182,255,59,.28); transition: transform .1s, box-shadow .1s; }
-    #snipe::before { content: "🎯"; margin-right: 10px; display: inline-block; animation: spin 6s linear infinite; }
-    #snipe::after { content: ""; position: absolute; inset: 0; background: linear-gradient(110deg, transparent 30%, rgba(255,255,255,.55) 50%, transparent 70%); transform: translateX(-100%); animation: shine 3.2s ease-in-out infinite; }
-    @keyframes shine { 0%, 60% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    #snipe:active { transform: translateY(4px); box-shadow: 0 2px 0 #5f9a12, 0 6px 20px rgba(182,255,59,.2); }
-    #snipe.busy { background: linear-gradient(135deg, #2a2160, #3a2d80); color: var(--lime); box-shadow: 0 6px 0 #150f33; }
-    #snipe.busy::before { animation-duration: .7s; }
+    /* scan controls */
+    #snipe { display: block; width: 100%; border: 0; border-radius: var(--r); color: var(--accent-ink); background: var(--accent); font: 600 15px var(--font); padding: 14px 16px; cursor: pointer; transition: opacity .15s, transform .1s; }
+    #snipe:active { transform: scale(.99); opacity: .9; }
+    #snipe.busy { background: var(--s3); color: var(--muted); }
     #snipe:disabled { cursor: wait; }
-    #lowmc { display: flex; width: 100%; align-items: center; justify-content: space-between; gap: 12px; margin-top: 12px; background: var(--card); border: 2px solid var(--card-border); color: var(--text); border-radius: 20px; padding: 12px 16px; font: 900 15px Nunito, system-ui, sans-serif; letter-spacing: .08em; cursor: pointer; transition: all .15s ease; }
-    #lowmc .lowmc-copy { text-align: left; } #lowmc .lowmc-copy::before { content: "🔥 "; }
-    #lowmc .lowmc-kicker { display: block; font-size: 11px; letter-spacing: .02em; font-weight: 700; color: var(--muted); margin-top: 2px; }
-    #lowmc.on { border-color: var(--pink); background: linear-gradient(135deg, #3a1240, #1a1440); color: #ffd1ea; box-shadow: 0 0 24px rgba(255,79,163,.25); }
-    #lowmc.on .lowmc-kicker { color: #ff9fd0; }
-    .switch { width: 50px; height: 30px; border-radius: 999px; background: #2a2160; position: relative; flex: 0 0 50px; transition: background .15s; }
-    #lowmc.on .switch { background: var(--pink); }
-    .knob { position: absolute; top: 3px; left: 3px; width: 24px; height: 24px; border-radius: 50%; background: #fff; transition: transform .2s cubic-bezier(.5,1.8,.5,1); }
-    #lowmc.on .knob { transform: translateX(20px); }
-    #status { text-align: center; color: var(--muted); font-size: 12.5px; font-weight: 700; min-height: 18px; margin: 12px 0 14px; line-height: 1.45; }
+    #lowmc { display: flex; width: 100%; align-items: center; justify-content: space-between; gap: 12px; margin-top: 8px; background: var(--s1); border: 1px solid var(--line); color: var(--text); border-radius: var(--r); padding: 12px 16px; font: 600 14px var(--font); cursor: pointer; transition: border-color .15s; }
+    #lowmc .lowmc-copy { text-align: left; }
+    #lowmc .lowmc-kicker { display: block; font-size: 12px; font-weight: 400; color: var(--muted); margin-top: 2px; }
+    #lowmc.on { border-color: var(--line2); }
+    .switch { width: 36px; height: 20px; border-radius: 999px; background: var(--s3); position: relative; flex: 0 0 36px; transition: background .15s; }
+    #lowmc.on .switch { background: var(--accent); }
+    .knob { position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: transform .2s ease; }
+    #lowmc.on .knob { transform: translateX(16px); }
+    #status { text-align: center; color: var(--muted); font-size: 12px; min-height: 16px; margin: 12px 0 16px; }
     #status.err { color: var(--red); }
-    .pulse { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--lime); margin-right: 6px; vertical-align: middle; animation: pulse 1.2s ease-in-out infinite; }
-    @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: .35; transform: scale(.7); } }
-    /* coin avatars */
-    .av { position: relative; flex: 0 0 auto; width: 46px; height: 46px; border-radius: 14px; overflow: hidden; display: grid; place-items: center; font-family: var(--display); font-size: 20px; color: #fff; text-shadow: 0 1px 0 rgba(0,0,0,.35); box-shadow: 0 0 0 2px rgba(255,255,255,.08); }
+    .pulse { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--green); margin-right: 8px; vertical-align: 1px; animation: pulse 2s ease-in-out infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
+    /* coin avatars: clean circles */
+    .av { position: relative; flex: 0 0 auto; width: 40px; height: 40px; border-radius: 50%; overflow: hidden; display: grid; place-items: center; font-size: 15px; font-weight: 600; color: #fff; box-shadow: inset 0 0 0 1px rgba(255,255,255,.08); background-blend-mode: normal; }
     .av img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; background: transparent; }
-    .av.sm { width: 34px; height: 34px; border-radius: 11px; font-size: 15px; }
-    .av.xs { width: 22px; height: 22px; border-radius: 7px; font-size: 11px; vertical-align: middle; display: inline-grid; margin-right: 6px; }
+    .av.sm { width: 32px; height: 32px; font-size: 13px; }
+    .av.xs { width: 20px; height: 20px; font-size: 10px; vertical-align: middle; display: inline-grid; margin-right: 8px; }
+    .av.xl { width: 56px; height: 56px; font-size: 22px; }
     /* pick cards */
-    #picks { display: flex; flex-direction: column; gap: 12px; }
-    .card { position: relative; background: linear-gradient(160deg, var(--card2), var(--card)); border: 2px solid var(--card-border); border-radius: 22px; padding: 13px 13px 12px; box-shadow: 0 8px 24px rgba(0,0,0,.25); animation: pop .35s cubic-bezier(.3,1.6,.5,1) both; }
-    .card:nth-child(2) { animation-delay: .04s; } .card:nth-child(3) { animation-delay: .08s; } .card:nth-child(4) { animation-delay: .12s; } .card:nth-child(n+5) { animation-delay: .16s; }
-    @keyframes pop { from { opacity: 0; transform: translateY(14px) scale(.96); } to { opacity: 1; transform: none; } }
-    .card.new-hit { border-color: var(--lime); animation: pop .35s cubic-bezier(.3,1.6,.5,1) both, glow 1.6s ease-in-out 3; }
-    @keyframes glow { 0%,100% { box-shadow: 0 0 0 0 rgba(182,255,59,0), 0 8px 24px rgba(0,0,0,.25); } 50% { box-shadow: 0 0 0 6px rgba(182,255,59,.25), 0 0 40px rgba(182,255,59,.35); } }
-    .card.whale { border-color: #2a7fa0; }
-    .card-top { display: flex; align-items: center; gap: 11px; }
-    .rank { position: absolute; top: -9px; left: -7px; min-width: 26px; height: 26px; padding: 0 6px; border-radius: 10px; background: var(--yellow); color: #2a1a00; font: 900 13px/26px Nunito, sans-serif; text-align: center; box-shadow: 0 3px 0 #b8901a; transform: rotate(-8deg); z-index: 2; }
+    #picks { display: flex; flex-direction: column; gap: 8px; }
+    .card { position: relative; background: var(--s1); border: 1px solid var(--line); border-radius: var(--r2); padding: 16px; animation: fade .25s ease both; }
+    @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+    .card.new-hit { animation: fade .25s ease both, newhl 2.4s ease 1; }
+    @keyframes newhl { 0% { border-color: var(--accent); } 100% { border-color: var(--line); } }
+    .card-top { display: flex; align-items: center; gap: 12px; }
+    .rank { position: absolute; top: 16px; right: 72px; font-size: 11px; color: var(--dim); font-weight: 500; }
     .ident { flex: 1; min-width: 0; }
-    .name-row { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
-    .name { font-family: var(--display); font-size: 19px; line-height: 1.1; letter-spacing: .01em; word-break: break-word; }
-    .sym { color: var(--muted); font-size: 13px; font-weight: 800; }
-    .narrative { margin-top: 3px; font-size: 12.5px; color: #c9c2ef; line-height: 1.35; font-weight: 600; }
-    .chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 9px; }
-    .tag { font-size: 10px; font-weight: 900; letter-spacing: .05em; text-transform: uppercase; padding: 4px 8px; border-radius: 999px; background: var(--chip); color: #d6d0ff; }
-    .tag.bonding { background: #3a2410; color: var(--orange); } .tag.fresh { background: #0f2e22; color: var(--green); } .tag.narrative { background: #1d2160; color: #b3bcff; }
-    .tag.new { background: var(--lime); color: #120c2b; animation: wiggle .5s ease-in-out 4; } .tag.whale { background: #0f2a3a; color: var(--cyan); } .tag.warn { background: #3a2a10; color: var(--yellow); }
-    .tag.rug { background: #3d0f1c; color: #ff8fa5; }
-    @keyframes wiggle { 0%,100% { transform: rotate(0); } 25% { transform: rotate(-6deg) scale(1.08); } 75% { transform: rotate(6deg) scale(1.08); } }
-    .score { flex: 0 0 auto; text-align: center; min-width: 52px; }
-    .score b { display: block; font-family: var(--display); font-size: 26px; line-height: 1; color: var(--lime); }
-    .score small { font-size: 9px; font-weight: 900; color: var(--muted); letter-spacing: .1em; }
-    .sig { margin-top: 10px; display: flex; align-items: center; gap: 8px; }
-    .sig .lbl { font: 900 12px Nunito, sans-serif; letter-spacing: .08em; padding: 4px 10px; border-radius: 10px; min-width: 64px; text-align: center; }
-    .sig .meter { flex: 1; height: 10px; border-radius: 99px; background: #120c2b; overflow: hidden; box-shadow: inset 0 1px 2px rgba(0,0,0,.5); }
-    .sig .meter i { display: block; height: 100%; border-radius: 99px; transition: width .6s cubic-bezier(.3,1.4,.5,1); }
-    .sig.good .lbl { background: var(--lime); color: #120c2b; animation: wiggle .6s ease-in-out 2; } .sig.good .meter i { background: linear-gradient(90deg, #5f9a12, var(--lime)); }
-    .sig.mid .lbl { background: #3a3010; color: var(--yellow); } .sig.mid .meter i { background: linear-gradient(90deg, #8a6a10, var(--yellow)); }
-    .sig.meh .lbl { background: var(--chip); color: var(--muted); } .sig.meh .meter i { background: #4a4290; }
-    .sig.bad .lbl { background: #3d0f1c; color: #ff8fa5; } .sig.bad .meter i { background: var(--red); }
-    .why { margin-top: 6px; font-size: 11px; color: var(--muted); font-weight: 700; line-height: 1.4; }
-    .stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin: 10px 0; }
-    .stat { background: rgba(18,12,43,.55); border-radius: 12px; padding: 7px 8px; }
-    .stat .k { display: block; font-size: 9.5px; color: var(--muted); text-transform: uppercase; letter-spacing: .07em; font-weight: 800; }
-    .stat .v { display: block; margin-top: 2px; font-size: 13.5px; font-weight: 900; font-variant-numeric: tabular-nums; }
+    .name-row { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; padding-right: 24px; }
+    .name { font-size: 15px; font-weight: 600; line-height: 1.25; word-break: break-word; }
+    .sym { color: var(--muted); font-size: 12px; font-weight: 500; }
+    .narrative { margin-top: 2px; font-size: 12px; color: var(--muted); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
+    .tag { font-size: 11px; font-weight: 500; padding: 2px 8px; border-radius: 6px; background: var(--s3); color: var(--muted); border: 1px solid var(--line); }
+    .tag.new { color: var(--accent); border-color: rgba(139,140,248,.35); background: var(--accent-soft); }
+    .tag.whale { color: var(--text); } .tag.warn { color: var(--amber); background: var(--amber-soft); border-color: transparent; } .tag.rug { color: var(--red); background: var(--red-soft); border-color: transparent; }
+    .score { flex: 0 0 auto; text-align: right; min-width: 48px; }
+    .score b { display: block; font-size: 20px; font-weight: 600; line-height: 1.1; }
+    .score small { font-size: 10px; font-weight: 500; color: var(--dim); letter-spacing: .06em; }
+    .sig { margin-top: 12px; display: flex; align-items: center; gap: 8px; }
+    .sig .lbl { font: 600 11px var(--font); letter-spacing: .04em; padding: 2px 8px; border-radius: 6px; min-width: 56px; text-align: center; }
+    .sig .meter { flex: 1; height: 4px; border-radius: 4px; background: var(--s3); overflow: hidden; }
+    .sig .meter i { display: block; height: 100%; border-radius: 4px; transition: width .4s ease; }
+    .sig.good .lbl { background: var(--green); color: #06180e; } .sig.good .meter i { background: var(--green); }
+    .sig.mid .lbl { background: var(--s3); color: var(--text); } .sig.mid .meter i { background: var(--muted); }
+    .sig.meh .lbl { background: var(--s3); color: var(--dim); } .sig.meh .meter i { background: var(--dim); }
+    .sig.bad .lbl { background: var(--red-soft); color: var(--red); } .sig.bad .meter i { background: var(--red); }
+    .why { margin-top: 8px; font-size: 12px; color: var(--muted); line-height: 1.45; }
+    .stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1px; margin: 12px 0; background: var(--line); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+    .stat { background: var(--s1); padding: 8px 10px; }
+    .stat .k { display: block; font-size: 11px; color: var(--dim); font-weight: 500; }
+    .stat .v { display: block; margin-top: 2px; font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; }
     .pos { color: var(--green); } .neg { color: var(--red); }
-    .actions { display: flex; gap: 6px; }
-    .actions button, .actions a { flex: 1; text-align: center; text-decoration: none; border: 0; border-radius: 14px; padding: 11px 6px; font: 900 12px Nunito, sans-serif; color: var(--text); background: var(--chip); cursor: pointer; transition: transform .1s; }
-    .actions :active { transform: scale(.95); }
-    .actions a.fomo { background: linear-gradient(135deg, var(--lime), #e2ff7a); color: #120c2b; box-shadow: 0 3px 0 #5f9a12; flex: 1.4; }
-    .actions a.dex { background: #1d2a5a; color: #c7d6ff; }
-    .rugbox { margin-top: 14px; } .rugbox summary { cursor: pointer; font-weight: 900; color: #ff8fa5; font-size: 13px; padding: 10px 12px; background: #2a0f1c; border: 1px solid #5a1f33; border-radius: 14px; list-style: none; }
-    .rugrow { display: flex; gap: 10px; align-items: center; padding: 9px 4px; border-bottom: 1px solid #2a2160; font-size: 12px; }
-    .rugrow b { font-size: 13px; } .rugrow .sub { color: #ff9fb3; }
-    footer { margin-top: 22px; text-align: center; color: #6f68a0; font-size: 11px; line-height: 1.4; font-weight: 700; }
-    .toast { position: fixed; left: 50%; bottom: calc(96px + env(safe-area-inset-bottom)); transform: translateX(-50%) translateY(16px); background: var(--lime); color: #120c2b; font-size: 13px; font-weight: 900; padding: 9px 16px; border-radius: 999px; opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s cubic-bezier(.3,1.6,.5,1); z-index: 40; }
+    .actions { display: flex; gap: 8px; }
+    .actions button, .actions a { flex: 1; text-align: center; border: 1px solid var(--line2); border-radius: 10px; padding: 10px 8px; font: 500 13px var(--font); color: var(--text); background: transparent; cursor: pointer; transition: background .15s; }
+    .actions button:hover, .actions a:hover { background: var(--s2); }
+    .actions a.fomo { background: var(--text); color: #0a0b0d; border-color: var(--text); font-weight: 600; flex: 1.4; }
+    .actions a.dex { color: var(--text); }
+    .rugbox { margin-top: 16px; } .rugbox summary { cursor: pointer; font-weight: 500; color: var(--muted); font-size: 13px; padding: 12px 16px; background: var(--s1); border: 1px solid var(--line); border-radius: var(--r); list-style: none; }
+    .rugbox summary::-webkit-details-marker { display: none; }
+    .rugbox[open] summary { border-radius: var(--r) var(--r) 0 0; }
+    .rugbox > .rugrow { background: var(--s1); border: 1px solid var(--line); border-top: 0; padding: 8px 16px; }
+    .rugrow { display: flex; gap: 12px; align-items: center; font-size: 12px; }
+    .rugrow b { font-size: 13px; } .rugrow .sub:last-child { color: var(--red); }
+    footer { margin-top: 24px; text-align: center; color: var(--dim); font-size: 11px; line-height: 1.5; }
+    .toast { position: fixed; left: 50%; bottom: calc(80px + env(safe-area-inset-bottom)); transform: translateX(-50%) translateY(8px); background: var(--s3); border: 1px solid var(--line2); color: var(--text); font-size: 13px; font-weight: 500; padding: 8px 16px; border-radius: 10px; opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; z-index: 40; }
     .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
     /* panels */
-    .engine-line { font-size: 12px; margin: 4px 0 6px; color: var(--muted); font-weight: 700; } .engine-line.ok { color: var(--lime); } .engine-line.warn { color: var(--orange); }
-    .panel { background: linear-gradient(160deg, var(--card2), var(--card)); border: 2px solid var(--card-border); border-radius: 22px; padding: 14px; margin-bottom: 12px; }
-    .panel h2 { font-family: var(--display); font-weight: 400; font-size: 18px; letter-spacing: .02em; color: #e9e4ff; margin-bottom: 10px; }
-    .empty { color: var(--muted); font-size: 13.5px; text-align: center; padding: 10px 0; font-weight: 700; }
-    .sub { color: var(--muted); font-size: 12px; font-weight: 700; }
-    /* race track */
-    .track { position: relative; height: 132px; margin: 8px 0 10px; border-radius: 18px; overflow: hidden; background: linear-gradient(180deg, #2a2160 0 49%, #120c2b 49% 51%, #2a2160 51% 100%); box-shadow: inset 0 0 0 3px #3a2d80; }
-    .track::before { content: ""; position: absolute; inset: 0; background: repeating-linear-gradient(90deg, transparent 0 22px, rgba(255,255,255,.08) 22px 34px); background-size: 34px 100%; animation: road 0.9s linear infinite; }
-    .track.paused::before { animation: none; }
-    @keyframes road { to { background-position: -34px 0; } }
-    .lane { position: absolute; left: 0; right: 0; height: 50%; } .lane.l1 { top: 0; } .lane.l2 { top: 50%; }
-    .lane span { position: absolute; left: 8px; top: 6px; font-size: 9px; font-weight: 900; letter-spacing: .12em; color: rgba(255,255,255,.35); }
-    .finish { position: absolute; right: 0; top: 0; bottom: 0; width: 14px; background: conic-gradient(#fff 25%, #111 0 50%, #fff 0 75%, #111 0) 0 0 / 14px 14px; }
-    .finish::after { content: "🏁"; position: absolute; right: 14px; top: 50%; transform: translateY(-50%); font-size: 18px; }
-    .runner { position: absolute; transform: translateX(-50%); transition: left 1.2s cubic-bezier(.3,1.3,.5,1); line-height: 1; text-align: center; z-index: 2; }
-    .runner .car { font-size: 34px; display: inline-block; animation: vroom .5s ease-in-out infinite alternate; filter: drop-shadow(0 4px 0 rgba(0,0,0,.4)); }
-    #run-bot { top: 14px; } #run-me { top: calc(50% + 14px); }
-    @keyframes vroom { from { transform: translateY(0) rotate(-3deg); } to { transform: translateY(-3px) rotate(3deg); } }
-    .runner small { position: absolute; top: -2px; left: 100%; margin-left: 2px; font: 900 11px Nunito, sans-serif; padding: 2px 6px; border-radius: 8px; background: rgba(0,0,0,.55); white-space: nowrap; color: #fff; }
-    #run-bot small { color: var(--lime); } #run-me small { color: var(--cyan); }
-    .scorebox { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .scorebox > div { background: rgba(18,12,43,.55); border-radius: 16px; padding: 10px; text-align: center; font-weight: 900; }
-    .scorebox b { display: block; font-family: var(--display); font-weight: 400; font-size: 26px; margin-top: 2px; font-variant-numeric: tabular-nums; }
-    .scorebox .sub { display: block; min-height: 16px; }
-    .timer { text-align: center; font-family: var(--display); font-size: 40px; letter-spacing: .04em; font-variant-numeric: tabular-nums; color: var(--yellow); text-shadow: 0 3px 0 #8a6a10; }
-    .timer small { display: block; font: 900 11px Nunito, sans-serif; color: var(--muted); letter-spacing: .14em; text-shadow: none; }
+    .engine-line { font-size: 12px; margin: 4px 0 8px; color: var(--muted); }
+    .engine-line.ok::before, .engine-line.warn::before { content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 8px; vertical-align: 1px; }
+    .engine-line.ok::before { background: var(--green); } .engine-line.warn { color: var(--amber); } .engine-line.warn::before { background: var(--amber); }
+    .panel { background: var(--s1); border: 1px solid var(--line); border-radius: var(--r2); padding: 16px; margin-bottom: 8px; }
+    .panel h2 { font-weight: 600; font-size: 14px; color: var(--text); margin-bottom: 12px; }
+    .empty { color: var(--dim); font-size: 13px; text-align: center; padding: 8px 0; }
+    .sub { color: var(--muted); font-size: 12px; font-weight: 400; }
+    /* race: minimal progress bars */
+    .track { display: grid; gap: 16px; margin: 16px 0; padding: 0; }
+    .track .lane, .track .finish { display: none; }
+    .runner { position: relative !important; left: auto !important; top: auto !important; transform: none !important; height: 6px; border-radius: 6px; background: var(--s3); }
+    .runner::before { content: attr(data-name); position: absolute; left: 0; bottom: 12px; font-size: 12px; color: var(--muted); }
+    .runner .car { display: none; }
+    .runner .fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 6px; background: var(--accent); transition: width .8s ease; }
+    #run-me .fill { background: var(--text); }
+    .runner small { position: absolute; right: 0; bottom: 10px; font: 600 12px var(--font); color: var(--text); font-variant-numeric: tabular-nums; }
+    .track { padding-top: 20px; }
+    .track .runner + .runner { margin-top: 16px; }
+    .scorebox { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .scorebox > div { background: var(--s2); border: 1px solid var(--line); border-radius: var(--r); padding: 12px; font-size: 12px; color: var(--muted); font-weight: 500; }
+    .scorebox b { display: block; font-weight: 600; font-size: 20px; margin: 2px 0; color: var(--text); font-variant-numeric: tabular-nums; }
+    .scorebox b.up { color: var(--green); } .scorebox b.down { color: var(--red); }
+    .scorebox .sub { display: block; min-height: 16px; font-size: 11px; }
+    .timer { text-align: center; font-size: 32px; font-weight: 600; letter-spacing: -.01em; font-variant-numeric: tabular-nums; color: var(--text); }
+    .timer small { display: block; font: 500 11px var(--font); color: var(--dim); letter-spacing: .08em; margin-bottom: 2px; }
     .up { color: var(--green); } .down { color: var(--red); }
-    .form label { display: block; font-size: 12px; color: var(--muted); margin: 8px 0 4px; font-weight: 800; }
-    .form input { width: 100%; background: #120c2b; border: 2px solid var(--card-border); color: var(--text); border-radius: 14px; padding: 12px; font: 800 16px Nunito, sans-serif; }
-    .form input:focus { outline: none; border-color: var(--lime); }
+    .form label { display: block; font-size: 12px; color: var(--muted); margin: 8px 0 4px; font-weight: 500; }
+    .form input, .me-inputs input { width: 100%; background: var(--bg); border: 1px solid var(--line2); color: var(--text); border-radius: 10px; padding: 10px 12px; font: 500 15px var(--font); font-variant-numeric: tabular-nums; }
+    .form input:focus, .me-inputs input:focus { outline: none; border-color: var(--accent); }
     .form .row { display: grid; grid-template-columns: 1fr 1fr 1.25fr; gap: 8px; align-items: end; }
-    .big { font-family: var(--display); font-size: 48px; text-align: center; color: var(--lime); }
-    .big small { display: block; font: 800 12px Nunito, sans-serif; color: var(--muted); }
-    table.stats { display: table; margin: 0; width: 100%; border-collapse: collapse; font-size: 12px; font-weight: 700; }
-    table.stats td, table.stats th { padding: 7px 4px; border-top: 1px solid var(--card-border); text-align: right; }
+    .big { font-size: 32px; font-weight: 600; text-align: center; color: var(--text); font-variant-numeric: tabular-nums; }
+    .big small { display: block; font: 400 12px var(--font); color: var(--muted); }
+    table.stats { display: table; margin: 0; width: 100%; border: 0; background: none; border-collapse: collapse; font-size: 12px; font-variant-numeric: tabular-nums; }
+    table.stats td, table.stats th { padding: 8px 4px; border-top: 1px solid var(--line); text-align: right; font-weight: 400; }
     table.stats td:first-child, table.stats th:first-child { text-align: left; }
-    table.stats th { color: var(--muted); font-weight: 800; border-top: 0; }
+    table.stats th { color: var(--dim); font-weight: 500; border-top: 0; font-size: 11px; }
     table.stats td:not(:first-child), table.stats th { white-space: nowrap; }
     table.stats td:first-child { width: 48%; }
-    .winner { text-align: center; font-family: var(--display); font-size: 26px; padding: 8px; color: var(--lime); animation: wiggle .6s ease-in-out 3; }
-    .spark { width: 100%; height: 64px; display: block; margin-top: 8px; }
+    .winner { text-align: center; font-size: 16px; font-weight: 600; padding: 8px; color: var(--text); }
+    .spark { width: 100%; height: 56px; display: block; margin-top: 8px; }
     .center { text-align: center; }
-    .dur { display: flex; align-items: center; gap: 3px; } .dur input { padding: 12px 4px; text-align: center; } .dur span { color: var(--muted); font-size: 12px; font-weight: 800; }
-    .err-line { color: var(--red); font-size: 12px; min-height: 16px; margin-top: 6px; font-weight: 800; }
-    .btn-start { margin-top: 8px; width: 100%; border: 0; border-radius: 22px; background: linear-gradient(135deg, var(--pink), #ff8a3b); color: #fff; font-family: var(--display); padding: 18px; font-size: 26px; letter-spacing: .08em; cursor: pointer; box-shadow: 0 6px 0 #a3245f, 0 14px 40px rgba(255,79,163,.3); text-shadow: 0 2px 0 rgba(0,0,0,.25); }
-    .btn-start:active { transform: translateY(4px); box-shadow: 0 2px 0 #a3245f; }
-    .btn-start:disabled { opacity: .6; }
-    .btn-stop { width: 100%; border: 2px solid #5a1f33; border-radius: 18px; background: #2a0f1c; color: var(--red); font: 900 15px Nunito, sans-serif; padding: 14px; letter-spacing: .1em; cursor: pointer; }
-    .legend { font-size: 11px; margin-top: 2px; } .lg-bot { color: var(--lime); } .lg-me { color: var(--cyan); }
-    .me-row { margin-top: 12px; border-top: 1px solid var(--card-border); padding-top: 10px; }
-    .me-row label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; font-weight: 800; }
+    .dur { display: flex; align-items: center; gap: 4px; } .dur input { padding: 10px 4px; text-align: center; } .dur span { color: var(--muted); font-size: 12px; }
+    .err-line { color: var(--red); font-size: 12px; min-height: 16px; margin-top: 8px; }
+    .btn-start { margin-top: 8px; width: 100%; border: 0; border-radius: var(--r); background: var(--accent); color: var(--accent-ink); font: 600 15px var(--font); padding: 14px; cursor: pointer; }
+    .btn-start:active { opacity: .9; }
+    .btn-start:disabled { opacity: .5; }
+    .btn-stop { width: 100%; border: 1px solid var(--line2); border-radius: var(--r); background: transparent; color: var(--red); font: 500 14px var(--font); padding: 12px; cursor: pointer; }
+    .legend { font-size: 11px; margin-top: 4px; } .lg-bot { color: var(--accent); } .lg-me { color: var(--text); }
+    .me-row { margin-top: 16px; border-top: 1px solid var(--line); padding-top: 12px; }
+    .me-row label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; font-weight: 500; }
     .me-inputs { display: flex; gap: 8px; }
-    .me-inputs input { flex: 1; min-width: 0; background: #120c2b; border: 2px solid var(--card-border); color: var(--text); border-radius: 14px; padding: 11px; font: 800 16px Nunito, sans-serif; }
-    .me-inputs button { border: 0; border-radius: 14px; background: var(--cyan); color: #08202a; font: 900 13px Nunito, sans-serif; padding: 0 16px; letter-spacing: .06em; cursor: pointer; }
-    #me-note { margin-top: 6px; min-height: 16px; }
-    .feed-status { font-size: 13px; color: #e2ddff; min-height: 20px; font-weight: 800; } .feed-status.err { color: var(--orange); }
-    .gap-note { margin-top: 8px; font-size: 12px; color: var(--orange); background: #2a1c10; border-radius: 12px; padding: 8px 10px; line-height: 1.4; font-weight: 700; }
-    .feed { list-style: none; margin-top: 8px; max-height: 240px; overflow-y: auto; font-size: 12.5px; color: #c9c2ef; font-weight: 700; }
-    .feed li { padding: 7px 0; border-top: 1px solid #2a2160; line-height: 1.35; display: flex; align-items: center; gap: 0; animation: slidein .3s ease both; }
+    .me-inputs input { flex: 1; min-width: 0; }
+    .me-inputs button { border: 1px solid var(--line2); border-radius: 10px; background: var(--s2); color: var(--text); font: 500 13px var(--font); padding: 0 16px; cursor: pointer; }
+    #me-note { margin-top: 8px; min-height: 16px; }
+    .feed-status { font-size: 13px; color: var(--text); min-height: 20px; } .feed-status.err { color: var(--amber); }
+    .gap-note { margin-top: 8px; font-size: 12px; color: var(--amber); background: var(--amber-soft); border-radius: 10px; padding: 8px 12px; line-height: 1.45; }
+    .feed { list-style: none; margin-top: 8px; max-height: 240px; overflow-y: auto; font-size: 12px; color: var(--muted); }
+    .feed li { padding: 8px 0; border-top: 1px solid var(--line); line-height: 1.4; display: flex; align-items: center; animation: fade .3s ease both; }
     .feed li:first-child { border-top: 0; }
-    @keyframes slidein { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: none; } }
-    .feed li time { color: var(--muted); margin-right: 6px; font-variant-numeric: tabular-nums; flex: 0 0 auto; font-size: 11px; }
-    .feed li.buy { color: var(--lime); } .feed li.sell-up { color: var(--green); } .feed li.sell-down { color: var(--red); } .feed li.warn { color: var(--orange); } .feed li.rug { color: #ff8fa5; }
-    .trade { border-top: 1px solid var(--card-border); padding: 11px 0; font-size: 13px; display: flex; gap: 10px; align-items: flex-start; }
-    .trade:first-child { border-top: 0; padding-top: 2px; }
+    .feed li time { color: var(--dim); margin-right: 8px; font-variant-numeric: tabular-nums; flex: 0 0 auto; font-size: 11px; }
+    .feed li.buy { color: var(--text); } .feed li.sell-up { color: var(--green); } .feed li.sell-down { color: var(--red); } .feed li.warn { color: var(--amber); } .feed li.rug { color: var(--red); }
+    .trade { border-top: 1px solid var(--line); padding: 12px 0; font-size: 13px; display: flex; gap: 12px; align-items: flex-start; }
+    .trade:first-child { border-top: 0; padding-top: 0; }
     .trade .tb { flex: 1; min-width: 0; }
     .trade-head { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
-    .trade-head b { font-family: var(--display); font-weight: 400; font-size: 17px; }
-    .trade-head .pnl { font-weight: 900; font-variant-numeric: tabular-nums; }
-    .trade .sub { margin-top: 3px; }
-    .trade details { margin-top: 6px; color: #d8d2ff; }
-    .trade summary { color: var(--lime); cursor: pointer; font-size: 12px; font-weight: 900; }
-    .trade details p { margin-top: 6px; line-height: 1.45; white-space: pre-wrap; font-size: 12px; font-weight: 600; }
-    .trade.flash-up { animation: flashUp 1.2s ease 2; } .trade.flash-down { animation: shake .5s ease 2; }
-    @keyframes flashUp { 0%,100% { background: transparent; } 50% { background: rgba(43,245,154,.18); } }
-    .bar { height: 8px; background: #120c2b; border-radius: 8px; margin-top: 7px; overflow: hidden; position: relative; }
-    .bar i { position: absolute; top: 0; bottom: 0; left: 0; width: 0; border-radius: 8px; transition: width .6s ease, background .3s; }
-    .bar::after { content: ""; position: absolute; left: 23%; top: 0; bottom: 0; width: 2px; background: rgba(255,255,255,.3); }
-    .skip-rug b::after { content: " 🚫"; } .skip-rug .t-reason { color: #ff8fa5; }
-    /* FX */
+    .trade-head b { font-weight: 600; font-size: 14px; }
+    .trade-head .pnl { font-weight: 600; font-variant-numeric: tabular-nums; }
+    .trade .sub { margin-top: 2px; }
+    .trade details { margin-top: 8px; color: var(--muted); }
+    .trade summary { color: var(--accent); cursor: pointer; font-size: 12px; font-weight: 500; }
+    .trade details p { margin-top: 8px; line-height: 1.5; white-space: pre-wrap; font-size: 12px; }
+    .trade.flash-up { animation: flashUp 1.2s ease 1; } .trade.flash-down { animation: flashDown 1.2s ease 1; }
+    @keyframes flashUp { 0%,100% { background: transparent; } 30% { background: var(--green-soft); } }
+    @keyframes flashDown { 0%,100% { background: transparent; } 30% { background: var(--red-soft); } }
+    .bar { height: 4px; background: var(--s3); border-radius: 4px; margin-top: 8px; overflow: hidden; position: relative; }
+    .bar i { position: absolute; top: 0; bottom: 0; left: 0; width: 0; border-radius: 4px; transition: width .6s ease, background .3s; }
+    .bar::after { content: ""; position: absolute; left: 23%; top: 0; bottom: 0; width: 1px; background: var(--line2); }
+    .skip-rug .t-reason { color: var(--red); }
+    /* FX: subtle */
     #fx { position: fixed; inset: 0; pointer-events: none; z-index: 50; overflow: hidden; }
-    .confetti { position: absolute; top: -20px; width: 10px; height: 14px; border-radius: 2px; animation: fall 1.8s cubic-bezier(.2,.6,.4,1) forwards; }
-    @keyframes fall { to { transform: translateY(110vh) rotate(720deg); opacity: .9; } }
-    .flash { position: fixed; inset: 0; pointer-events: none; z-index: 49; animation: flash .7s ease forwards; }
-    @keyframes flash { from { opacity: .55; } to { opacity: 0; } }
-    .shake { animation: shake .45s ease 2; }
-    @keyframes shake { 0%,100% { transform: translateX(0); } 20% { transform: translateX(-8px); } 40% { transform: translateX(8px); } 60% { transform: translateX(-5px); } 80% { transform: translateX(5px); } }
-    .bigpop { position: fixed; left: 50%; top: 38%; transform: translate(-50%, -50%); z-index: 51; pointer-events: none; font-family: var(--display); font-size: 46px; color: #fff; text-shadow: 0 4px 0 rgba(0,0,0,.4); white-space: nowrap; background: rgba(11,8,32,.78); padding: 12px 22px; border-radius: 26px; border: 2px solid rgba(255,255,255,.12); animation: bigpop 1.4s cubic-bezier(.3,1.6,.5,1) forwards; text-align: center; }
-    .bigpop small { display: block; font-size: 18px; }
-    @keyframes bigpop { 0% { opacity: 0; transform: translate(-50%, -50%) scale(.3); } 25% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); } 70% { opacity: 1; transform: translate(-50%, -50%) scale(1); } 100% { opacity: 0; transform: translate(-50%, -80%) scale(.9); } }
+    .confetti { position: absolute; top: -10px; width: 5px !important; height: 7px !important; border-radius: 1px; opacity: .8; animation: fall 1.6s ease-in forwards; }
+    .confetti:nth-child(n+25) { display: none; }
+    @keyframes fall { to { transform: translateY(60vh) rotate(240deg); opacity: 0; } }
+    .flash { position: fixed; inset: 0; pointer-events: none; z-index: 49; animation: flash .6s ease forwards; }
+    @keyframes flash { from { opacity: .25; } to { opacity: 0; } }
+    .shake { animation: flashDown .9s ease 1; }
+    .bigpop { position: fixed; left: 50%; top: calc(16px + env(safe-area-inset-top)); transform: translateX(-50%); z-index: 51; pointer-events: none; font: 600 14px var(--font); color: var(--text) !important; white-space: nowrap; background: var(--s2); padding: 10px 16px; border-radius: var(--r); border: 1px solid var(--line2); box-shadow: 0 8px 24px rgba(0,0,0,.4); animation: toastin 2.2s ease forwards; text-align: center; }
+    .bigpop small { display: block; font-size: 12px; font-weight: 400; color: var(--muted); }
+    @keyframes toastin { 0% { opacity: 0; transform: translate(-50%, -8px); } 12%, 80% { opacity: 1; transform: translate(-50%, 0); } 100% { opacity: 0; transform: translate(-50%, -8px); } }
     @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
 
-    /* ===== BUY!!! hero ===== */
-    .hero { position: relative; border-radius: 24px; margin: 4px 0 14px; overflow: hidden; }
-    .hero.idle { display: flex; align-items: center; gap: 14px; padding: 14px; background: linear-gradient(160deg, #1d1650, #15103a); border: 2px dashed #3a2d80; }
-    .idle-anim { position: relative; width: 64px; height: 64px; flex: none; border-radius: 50%; background: radial-gradient(circle, #2a2160 0%, #1a1445 70%); display: grid; place-items: center; overflow: hidden; }
-    .idle-anim .radar { position: absolute; inset: 0; border-radius: 50%; background: conic-gradient(from 0deg, rgba(59,232,255,.55), transparent 28%); animation: spin 2.4s linear infinite; }
-    .idle-anim .bob { position: relative; font-size: 30px; animation: bob 1.8s ease-in-out infinite; }
-    .idle-anim .zz { position: absolute; right: 8px; top: 6px; font: 700 12px var(--display, sans-serif); color: var(--cyan); opacity: 0; animation: zz 2.4s ease-out infinite; }
-    .idle-anim .z2 { animation-delay: 1.2s; right: 14px; }
-    .idle-txt { display: flex; flex-direction: column; gap: 4px; } .idle-txt b { font-family: var(--display); font-size: 18px; color: #e9e4ff; letter-spacing: .01em; line-height: 1.15; }
-    .hero.fire { padding: 14px 14px 12px; border: 3px solid var(--lime); background: radial-gradient(120% 80% at 0% 0%, rgba(182,255,59,.22), transparent 60%), radial-gradient(120% 90% at 100% 0%, rgba(255,79,163,.25), transparent 60%), linear-gradient(160deg, #241a63, #160f3d); box-shadow: 0 0 0 4px rgba(182,255,59,.12), 0 10px 40px rgba(182,255,59,.25); animation: heroglow 2s ease-in-out infinite; }
-    .hero.fire.new { animation: pop .45s cubic-bezier(.3,1.6,.5,1) both, heroglow 2s ease-in-out infinite; }
-    .hero-top { display: flex; gap: 14px; align-items: center; }
-    .av.xl { width: 92px; height: 92px; font-size: 40px; border-radius: 26px; box-shadow: 0 0 0 3px var(--lime), 0 8px 24px rgba(0,0,0,.4); }
+    /* ===== Top signal card ===== */
+    .hero { position: relative; border-radius: var(--r2); margin: 0 0 16px; background: var(--s1); border: 1px solid var(--line); }
+    .hero.idle { display: flex; align-items: center; gap: 12px; padding: 16px; }
+    .idle-anim { position: relative; width: 40px; height: 40px; flex: none; border-radius: 50%; background: var(--s2); border: 1px solid var(--line); display: grid; place-items: center; overflow: hidden; }
+    .idle-anim .radar { position: absolute; inset: -1px; border-radius: 50%; background: conic-gradient(from 0deg, rgba(139,140,248,.35), transparent 30%); animation: spin 3s linear infinite; }
+    .idle-anim .radar::after { content: ""; position: absolute; inset: 2px; border-radius: 50%; background: var(--s2); }
+    .idle-anim .bob { position: relative; font-size: 18px; }
+    .idle-txt { display: flex; flex-direction: column; gap: 2px; } .idle-txt b { font-size: 14px; font-weight: 600; color: var(--text); }
+    .hero.fire { padding: 16px; }
+    .hero.fire.new { animation: fade .3s ease both, newhl 2.4s ease 1; }
+    .hero-label { display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--dim); font-weight: 500; letter-spacing: .06em; text-transform: uppercase; margin-bottom: 12px; }
+    .hero-top { display: flex; gap: 12px; align-items: center; }
     .hero-id { min-width: 0; flex: 1; }
-    .badge-buy { display: inline-block; font-family: var(--display); font-size: 40px; line-height: 1; padding: 4px 14px 6px; border-radius: 16px; color: #120c2b; background: linear-gradient(135deg, var(--lime), #f3ff9a 50%, var(--yellow)); box-shadow: 0 5px 0 #5f9a12, 0 0 24px rgba(182,255,59,.6); transform: rotate(-4deg); animation: buybadge 1.1s ease-in-out infinite; }
-    .hero-name { font-family: var(--display); font-size: 22px; color: #fff; margin-top: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .hero-sym { font-weight: 800; color: var(--cyan); }
-    .hero-str { display: flex; align-items: center; gap: 10px; margin: 12px 0 4px; flex-wrap: wrap; } .fires { font-size: 22px; letter-spacing: 1px; } .fires .dim { filter: grayscale(1); opacity: .25; }
-    .hero-odds { background: rgba(0,0,0,.25); border-radius: 12px; padding: 8px 10px; margin: 6px 0 10px; font-size: 14px; color: #e9e4ff; } .hero-odds b { color: var(--lime); }
+    .badge-buy { display: inline-block; font: 600 12px var(--font); letter-spacing: .02em; padding: 4px 10px; border-radius: 999px; color: #06180e; background: var(--green); white-space: nowrap; }
+    .hero-name { font-size: 17px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .hero-sym { font-size: 13px; font-weight: 500; color: var(--muted); }
+    .hero-str { display: flex; align-items: center; gap: 12px; margin: 16px 0 8px; flex-wrap: wrap; }
+    .strength { display: inline-flex; gap: 3px; align-items: flex-end; } .strength i { width: 4px; border-radius: 1px; background: var(--s3); } .strength i.on { background: var(--green); }
+    .strength i:nth-child(1) { height: 6px; } .strength i:nth-child(2) { height: 8px; } .strength i:nth-child(3) { height: 10px; } .strength i:nth-child(4) { height: 12px; } .strength i:nth-child(5) { height: 14px; }
+    .hero-odds { background: var(--s2); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; margin: 8px 0 0; font-size: 13px; color: var(--text); } .hero-odds b { color: var(--text); font-weight: 600; }
     .hero-stats { grid-template-columns: repeat(3, 1fr); }
-    .thesis { margin: 10px 0 4px; padding-left: 18px; font-size: 13.5px; line-height: 1.4; color: #ddd6ff; } .thesis li { margin: 2px 0; }
-    .hero-actions a.fomo.big { flex: 1 1 100%; font-family: var(--display); font-size: 22px; padding: 14px; text-align: center; animation: buypulse 1.4s ease-in-out infinite; }
+    .thesis { margin: 0 0 12px; padding-left: 16px; font-size: 13px; line-height: 1.5; color: var(--muted); } .thesis li { margin: 2px 0; }
     .hero-actions { flex-wrap: wrap; }
-    @keyframes buypulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.03); } }
-    .nfa { font-size: 11px; color: #9a90c8; margin: 8px 0 0; text-align: center; }
+    .hero-actions a.fomo.big { flex: 1 1 100%; font-size: 14px; padding: 12px; }
+    .nfa { font-size: 11px; color: var(--dim); margin: 12px 0 0; text-align: center; }
     @keyframes spin { to { transform: rotate(360deg); } }
-    @keyframes bob { 0%,100% { transform: translateY(2px) rotate(-6deg); } 50% { transform: translateY(-4px) rotate(6deg); } }
-    @keyframes zz { 0% { opacity: 0; transform: translate(0,6px) scale(.7); } 30% { opacity: 1; } 100% { opacity: 0; transform: translate(6px,-14px) scale(1.2); } }
-    @keyframes buybadge { 0%,100% { transform: rotate(-4deg) scale(1); } 50% { transform: rotate(3deg) scale(1.09); } }
-    @keyframes heroglow { 0%,100% { box-shadow: 0 0 0 4px rgba(182,255,59,.12), 0 10px 40px rgba(182,255,59,.22); } 50% { box-shadow: 0 0 0 6px rgba(255,79,163,.18), 0 10px 50px rgba(255,79,163,.35); } }
   </style>
 </head>
 <body>
   <header>
     <span class="mascot">🫗</span>
-    <div><div class="logo">SNIPE</div><div class="sub">early coins · rug filter · tracked wallets</div></div>
+    <div><div class="logo">Snipe</div><div class="sub">Early coins · rug filter · tracked wallets</div></div>
     <div class="hdr-right" id="hdr-clock"></div>
   </header>
-  <div class="pills"><span class="pill" id="sess-pill">🕐 checking session…</span><span class="pill whale" id="whale-pill" hidden>🐋 —</span></div>
+  <div class="pills"><span class="pill" id="sess-pill">Checking session…</span><span class="pill whale" id="whale-pill" hidden>—</span></div>
 
   <nav class="modebar" id="modebar">
-    <button type="button" data-view="snipe" class="on"><i>🎯</i>SNIPE</button>
-    <button type="button" data-view="lowmc"><i>🔥</i>LOW MC</button>
-    <button type="button" data-view="race"><i>🫗</i>RACE</button>
-    <button type="button" data-view="data"><i>📊</i>DATA</button>
+    <button type="button" data-view="snipe" class="on"><i><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg></i>Snipe</button>
+    <button type="button" data-view="lowmc"><i><svg viewBox="0 0 24 24"><path d="M3 17l5-5 4 4 8-8"/><path d="M14 8h6v6"/></svg></i>Low MC</button>
+    <button type="button" data-view="race"><i><svg viewBox="0 0 24 24"><path d="M4 21V4"/><path d="M4 4h12l-2 4 2 4H4"/></svg></i>Race</button>
+    <button type="button" data-view="data"><i><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg></i>Data</button>
   </nav>
 
   <section class="view" id="view-snipe">
-  <div id="buy-hero" class="hero idle"><div class="idle-anim" aria-hidden="true"><span class="radar"></span><span class="bob">🫗</span></div><div class="idle-txt"><b>Scanning for a clean BUY setup…</b><span class="sub">The single best coin that clears the BUY bar and every rug check shows here.</span></div></div>
-  <button id="snipe" type="button">SNIPE</button>
+  <div id="buy-hero" class="hero idle"><div class="idle-anim" aria-hidden="true"><span class="radar"></span><span class="bob">🫗</span></div><div class="idle-txt"><b>Scanning for a clean setup…</b><span class="sub">The top coin that clears the BUY bar and every rug check appears here.</span></div></div>
+  <button id="snipe" type="button">Scan now</button>
   <button id="lowmc" type="button" aria-pressed="false">
     <span class="lowmc-copy">
-      LOW MC
+      Low MC auto-scan
       <span class="lowmc-kicker">Off · tap to auto-scan fresh narratives</span>
     </span>
     <span class="switch" aria-hidden="true"><span class="knob"></span></span>
@@ -275,8 +269,8 @@
 
   <section class="view" id="view-race" hidden>
     <div class="panel form" id="race-setup">
-      <h2>🏁 Race 🫗: set it up</h2>
-      <p class="sub" style="margin-bottom:6px">You trade in fomo. 🫗 paper trades on its own server. Whoever's further ahead at the buzzer, or first to the goal, wins.</p>
+      <h2>Race 🫗</h2>
+      <p class="sub" style="margin-bottom:8px">You trade in fomo. 🫗 paper trades on its own server. Whoever's further ahead at the buzzer, or first to the goal, wins.</p>
       <p class="engine-line" id="r-engine">Checking 🫗's server…</p>
       <div class="row">
         <div><label for="r-budget">Budget $</label><input id="r-budget" type="number" inputmode="decimal" placeholder="18" /></div>
@@ -288,7 +282,7 @@
       <label for="r-wallet">Your fomo wallet address (optional, tracks your balance automatically)</label>
       <input id="r-wallet" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Leave blank to type your balance yourself" />
       <p class="err-line" id="r-err"></p>
-      <button type="button" class="btn-start" id="r-start">START RACE 🏁</button>
+      <button type="button" class="btn-start" id="r-start">Start race</button>
     </div>
 
     <div id="race-board" hidden>
@@ -296,31 +290,31 @@
         <div class="winner" id="rb-banner" hidden></div>
         <div class="timer" id="rb-timer"><small>TIME LEFT</small><span id="rb-clock">--:--:--</span></div>
         <div class="track" id="rb-track">
-          <div class="lane l1"><span>🫗 BOT</span></div><div class="lane l2"><span>YOU</span></div><div class="finish"></div>
-          <div class="runner" id="run-bot" style="left:6%"><span class="car">🫗</span><small id="run-bot-lbl">$0.00</small></div>
-          <div class="runner" id="run-me" style="left:6%"><span class="car">🏎️</span><small id="run-me-lbl">$0.00</small></div>
+          
+          <div class="runner" id="run-bot" data-name="🫗 Bot" style="left:6%"><span class="fill" id="fill-bot"></span><span class="car">🫗</span><small id="run-bot-lbl">$0.00</small></div>
+          <div class="runner" id="run-me" data-name="You" style="left:6%"><span class="fill" id="fill-me"></span><span class="car"></span><small id="run-me-lbl">$0.00</small></div>
         </div>
         <div class="scorebox">
           <div>🫗 Bot<b id="sb-bot-pnl">+$0.00</b><span class="sub" id="sb-bot-sub">—</span></div>
-          <div>🏎️ You<b id="sb-me-pnl">+$0.00</b><span class="sub" id="sb-me-sub">—</span></div>
+          <div>You<b id="sb-me-pnl">+$0.00</b><span class="sub" id="sb-me-sub">—</span></div>
         </div>
         <p class="sub center" id="rb-meta" style="margin-top:8px">—</p>
         <svg class="spark" id="rb-spark" viewBox="0 0 300 60" preserveAspectRatio="none">
-          <line id="sp-base" x1="0" x2="300" y1="30" y2="30" stroke="#4a4290" stroke-dasharray="4 4" />
-          <line id="sp-goal" x1="0" x2="300" y1="4" y2="4" stroke="#5f9a12" stroke-dasharray="2 4" />
-          <path id="sp-me" d="" fill="none" stroke="#3be8ff" stroke-width="1.8" />
-          <path id="sp-bot" d="" fill="none" stroke="#b6ff3b" stroke-width="2.4" />
+          <line id="sp-base" x1="0" x2="300" y1="30" y2="30" stroke="#2e313a" stroke-dasharray="4 4" />
+          <line id="sp-goal" x1="0" x2="300" y1="4" y2="4" stroke="#2fbf71" stroke-dasharray="2 4" />
+          <path id="sp-me" d="" fill="none" stroke="#ececf1" stroke-width="1.5" />
+          <path id="sp-bot" d="" fill="none" stroke="#8b8cf8" stroke-width="1.8" />
         </svg>
         <p class="sub center legend"><span class="lg-bot">━ 🫗</span> <span class="lg-me">━ you</span> <span>┅ start / goal</span></p>
         <div class="me-row" id="me-row">
           <label for="me-bal">My balance now $</label>
-          <div class="me-inputs"><input id="me-bal" type="number" inputmode="decimal" placeholder="18" /><button type="button" id="me-upd">UPDATE</button></div>
+          <div class="me-inputs"><input id="me-bal" type="number" inputmode="decimal" placeholder="18" /><button type="button" id="me-upd">Update</button></div>
           <p class="sub" id="me-note"></p>
         </div>
       </div>
 
       <div class="panel feed-panel">
-        <h2>📡 Live 🫗 activity</h2>
+        <h2>Live 🫗 activity</h2>
         <div class="feed-status" id="rb-status"><span class="pulse"></span>Starting…</div>
         <p class="engine-line" id="rb-engine"></p>
         <p class="gap-note" id="rb-gap" hidden></p>
@@ -329,10 +323,10 @@
 
       <div class="panel"><h2 id="h-open">🫗 Open positions (0)</h2><div id="rb-open"></div><div class="empty" id="rb-open-empty">Hunting…</div></div>
       <div class="panel"><h2 id="h-closed">🫗 Closed (0)</h2><div id="rb-closed"></div><div class="empty" id="rb-closed-empty">No closed trades yet</div></div>
-      <div class="panel"><h2>🙅 Passed on</h2><div id="rb-skipped"></div><div class="empty" id="rb-skipped-empty">Nothing yet</div></div>
+      <div class="panel"><h2>Passed on</h2><div id="rb-skipped"></div><div class="empty" id="rb-skipped-empty">Nothing yet</div></div>
 
-      <button type="button" class="btn-stop" id="r-stop">STOP RACE</button>
-      <button type="button" class="btn-start" id="r-new" hidden>NEW RACE 🏁</button>
+      <button type="button" class="btn-stop" id="r-stop">Stop race</button>
+      <button type="button" class="btn-start" id="r-new" hidden>New race</button>
       <p class="sub center" style="margin-top:10px" id="rb-foot">Paper trades with 4% slippage + 1% fee each way.</p>
     </div>
   </section>
@@ -461,7 +455,7 @@
         if (x.website) add(6, "website"); if (x.twitter) add(3, "X"); if (x.hasDesc) add(2, ""); if (x.boost > 0) add(4, "boosted");
         if (x.jBotPct >= 40) add(-5, "bot-heavy"); if (x.jTop10Pct >= 25) add(-3, "");
         if (freshDev(x)) add(-4, "fresh dev");
-        if (x.wHits > 0) add(Math.min(20, 12 + (x.wHits - 1) * 4), "🐋 " + x.wHits + " tracked wallet" + (x.wHits > 1 ? "s" : ""));
+        if (x.wHits > 0) add(Math.min(20, 12 + (x.wHits - 1) * 4), "" + x.wHits + " tracked wallet" + (x.wHits > 1 ? "s" : ""));
         if (sess) { const a = Math.round((sess.f - 1) * 30); if (a) add(Math.max(-12, Math.min(6, a)), sess.name + " hours"); }
         return { score: Math.round(Math.min(100, Math.max(0, s))), why };
       }
@@ -516,10 +510,10 @@
       function paintPills() {
         const s = sessNow(), el = document.getElementById("sess-pill"), w = document.getElementById("whale-pill");
         if (el) {
-          el.textContent = "🕐 Now: " + s.name + (s.n ? ", " + s.winRate + "% hit rate, n=" + s.n : ", no data yet") + (s.src === "prior" ? (s.f >= 1 ? " · usually busy" : " · usually slow, pickier") : (s.f >= 1 ? " · strong hours" : s.f < 0.9 ? " · weak hours, pickier" : ""));
+          el.textContent = "Now: " + s.name + (s.n ? ", " + s.winRate + "% hit rate, n=" + s.n : ", no data yet") + (s.src === "prior" ? (s.f >= 1 ? " · usually busy" : " · usually slow, pickier") : (s.f >= 1 ? " · strong hours" : s.f < 0.9 ? " · weak hours, pickier" : ""));
           el.className = "pill " + (s.f >= 1 ? "good" : s.f < 0.9 ? "weak" : "");
         }
-        if (w) { w.hidden = !INTEL.updated; w.textContent = "🐋 " + INTEL.wallets.size + " tracked wallets"; }
+        if (w) { w.hidden = !INTEL.updated; w.textContent = "" + INTEL.wallets.size + " tracked wallets"; }
         const c = document.getElementById("hdr-clock");
         if (c) c.textContent = new Date().toLocaleTimeString("en-US", { timeZone: "America/New_York", hour: "numeric", minute: "2-digit" }) + " ET";
       }
@@ -567,7 +561,7 @@
       function avatarHtml(img, sym, size) {
         const s = String(sym || "?").replace(/^\$+/, "") || "?"; let h = 7;
         Array.from(s).forEach(function (ch) { h = (h * 31 + ch.codePointAt(0)) >>> 0; });
-        const c1 = "hsl(" + (h % 360) + ",85%,60%)", c2 = "hsl(" + ((h >>> 9) % 360) + ",80%,42%)";
+        const c1 = "hsl(" + (h % 360) + ",22%,34%)", c2 = "hsl(" + (h % 360) + ",18%,24%)";
         const ini = escapeHtml(Array.from(s)[0].toUpperCase());
         return '<span class="av' + (size ? " " + size : "") + '" style="background:linear-gradient(135deg,' + c1 + "," + c2 + ')">' + ini +
           (img ? '<img src="' + escapeHtml(img) + '" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">' : "") + "</span>";
@@ -983,7 +977,7 @@
         if (x.jDevPct != null) h.push("dev " + (Math.round(x.jDevPct * 10) / 10) + "%");
         const miss = [x.jSniperPct == null && "snipers", x.jBundlePct == null && "bundlers", x.jDevPct == null && "dev"].filter(Boolean);
         if (h.length) out.push(h.join(", ") + (miss.length ? "; passed the rug checks it could run (no " + miss.join("/") + " data from Jupiter)." : "; passed every rug check."));
-        if (x.wHits) out.push("🐋 " + x.wHits + " tracked early-winner wallet" + (x.wHits > 1 ? "s" : "") + " bought in the last 100 trades.");
+        if (x.wHits) out.push("" + x.wHits + " tracked early-winner wallet" + (x.wHits > 1 ? "s" : "") + " bought in the last 100 trades.");
         const soc = [x.website && "website", x.twitter && "X", x.hasDesc && "description", x.boost > 0 && "boost"].filter(Boolean);
         if (soc.length) out.push("Has " + soc.join(" + ") + ".");
         return out;
@@ -997,8 +991,8 @@
           const top = ranked[0];
           HERO.mint = null;
           box.className = "hero idle";
-          box.innerHTML = '<div class="idle-anim" aria-hidden="true"><span class="radar"></span><span class="bob">🫗</span><span class="zz">z</span><span class="zz z2">z</span></div>' +
-            '<div class="idle-txt"><b>No BUY right now, waiting for a clean setup</b><span class="sub">' + (low ? "LOW MC" : "SNIPE") + " · BUY bar now: score " + bar + " (" + escapeHtml(sess.name) + ")" +
+          box.innerHTML = '<div class="idle-anim" aria-hidden="true"><span class="radar"></span><span class="bob">🫗</span></div>' +
+            '<div class="idle-txt"><b>No BUY signal right now</b><span class="sub">' + "Waiting for a clean setup · " + (low ? "Low MC" : "Snipe") + " · bar: score " + bar + " (" + escapeHtml(sess.name) + ")" +
             (top ? " · best right now $" + escapeHtml(String(top.pk.pair.baseToken.symbol || "").replace(/^\$+/, "")) + " at " + top.pk.score : " · nothing passed the rug check") + "</span></div>";
           return;
         }
@@ -1008,40 +1002,42 @@
         const xl = xLinkOf(meta, mint), dex = p.url || ("https://dexscreener.com/solana/" + mint);
         const liq = num(p.liquidity && p.liquidity.usd), t5 = (p.txns && p.txns.m5) || {};
         const ageMs = Date.now() - num(p.pairCreatedAt);
-        const fires = "🔥".repeat(hit.tier) + '<span class="dim">' + "🔥".repeat(5 - hit.tier) + "</span>";
+        const fires = '<span class="strength" aria-label="strength ' + hit.tier + ' of 5">' + [1, 2, 3, 4, 5].map(function (k) { return "<i" + (k <= hit.tier ? ' class="on"' : "") + "></i>"; }).join("") + "</span>";
         const pc = function (v) { return v == null ? "—" : Math.round(v) + "%"; };
         const s = function (k, v, c) { return '<div class="stat"><span class="k">' + k + '</span><span class="v' + (c ? " " + c : "") + '">' + v + "</span></div>"; };
         const isNew = HERO.mint !== mint;
         box.className = "hero fire" + (isNew ? " new" : "");
         box.innerHTML =
+          '<div class="hero-label"><span>Top signal · ' + (low ? "Low MC" : "Snipe") + '</span><span>' + new Date().toLocaleTimeString("en-US", { timeZone: "America/New_York", hour: "numeric", minute: "2-digit" }) + ' ET</span></div>' +
           '<div class="hero-top">' + avatarHtml(pk.img, sym, "xl") +
-            '<div class="hero-id"><div class="badge-buy">BUY!!!</div><div class="hero-name">' + escapeHtml(name) + '</div><div class="hero-sym">$' + escapeHtml(sym) + ' <span class="sub">· ' + (low ? "LOW MC" : "SNIPE") + "</span></div></div>" +
+            '<div class="hero-id"><div class="hero-name">' + escapeHtml(name) + '</div><div class="hero-sym">$' + escapeHtml(sym) + "</div></div>" +
+            '<span class="badge-buy">BUY signal</span>' +
           "</div>" +
-          '<div class="hero-str"><span class="fires" title="signal strength ' + hit.tier + '/5">' + fires + '</span><span class="sub">strength ' + hit.tier + "/5 · score " + pk.score + " vs bar " + bar + "</span></div>" +
-          '<div class="hero-odds">Similar setups' + (st.g === "t3+" ? " (🔥🔥🔥+)" : st.g === "t1-2" ? " (🔥–🔥🔥)" : "") + ": <b>" + st.hit + "% hit +50%</b>, n=" + st.n + ' <span class="sub">· ' + escapeHtml(st.src) + (st.n < 30 ? ", small sample" : "") + (st.src !== "live tracker" ? ", in-sample" : "") + "</span></div>" +
+          '<div class="hero-str">' + fires + '<span class="sub">Strength ' + hit.tier + "/5 · score " + pk.score + " vs bar " + bar + "</span></div>" +
+          '<div class="hero-odds">Similar setups' + (st.g === "t3+" ? " (strength 3–5)" : st.g === "t1-2" ? " (strength 1–2)" : "") + ": <b>" + st.hit + "% hit +50%</b>, n=" + st.n + ' <span class="sub">· ' + escapeHtml(st.src) + (st.n < 30 ? ", small sample" : "") + (st.src !== "live tracker" ? ", in-sample" : "") + "</span></div>" +
           '<div class="stats hero-stats">' +
             s("Mcap", fmtUsd(num(p.marketCap) || num(p.fdv))) + s("Liquidity", isBonding(p) && !liq ? "bonding" : fmtUsd(liq)) + s("Age", fmtAge(ageMs)) +
             s("5m", fmtPct(x.chg5), pctClass(x.chg5)) + s("1h", fmtPct(x.chg1h), pctClass(x.chg1h)) + s("5m buy/sell", num(t5.buys) + " / " + num(t5.sells)) +
             s("Holders", x.jHolders != null ? x.jHolders : "—") + s("Top 10", pc(x.jTop10Pct)) + s("Snipers", pc(x.jSniperPct)) +
-            s("Bundlers", pc(x.jBundlePct)) + s("Dev", x.jDevPct != null ? (Math.round(x.jDevPct * 10) / 10) + "%" : "—") + s("🐋 Tracked", x.wHits ? x.wHits + " bought" : "none") +
+            s("Bundlers", pc(x.jBundlePct)) + s("Dev", x.jDevPct != null ? (Math.round(x.jDevPct * 10) / 10) + "%" : "—") + s("Tracked wallets", x.wHits ? x.wHits + " bought" : "none") +
           "</div>" +
           '<ul class="thesis">' + heroThesis(pk, hit.tier, bar, sess).map(function (t) { return "<li>" + escapeHtml(t) + "</li>"; }).join("") + "</ul>" +
-          '<div class="actions hero-actions"><a class="fomo big" href="https://fomo.family/tokens/solana/' + encodeURIComponent(mint) + '" target="_blank" rel="noopener">BUY ON FOMO 🚀</a>' +
+          '<div class="actions hero-actions"><a class="fomo big" href="https://fomo.family/tokens/solana/' + encodeURIComponent(mint) + '" target="_blank" rel="noopener">Open in fomo</a>' +
             '<a class="dex" href="' + escapeHtml(dex) + '" target="_blank" rel="noopener">DexScreener</a><a class="dex" href="' + escapeHtml(xl.url) + '" target="_blank" rel="noopener">' + xl.label + "</a></div>" +
           '<p class="nfa">Not financial advice. Memecoins can go to zero; past hit rates don\'t promise anything.</p>';
         if (isNew) {
           HERO.mint = mint;
-          FX.buzz([60, 40, 60, 40, 120]); heroBeep(); FX.confetti(50);
+          FX.buzz([40, 30, 40]); heroBeep();
         }
       }
       function renderRugs(list) {
         const box = document.getElementById("rugs"); if (!box) return;
         if (!list.length) { box.innerHTML = ""; return; }
         const wasOpen = !!box.querySelector("details[open]");
-        box.innerHTML = '<details class="rugbox"' + (wasOpen ? " open" : "") + '><summary>🚫 Skipped ' + list.length + " as rug risk · tap to see why</summary>" + list.map(function (c) {
+        box.innerHTML = '<details class="rugbox"' + (wasOpen ? " open" : "") + '><summary>Skipped ' + list.length + " as rug risk · tap to see why</summary>" + list.map(function (c) {
           const p = c.pair, sym = String(p.baseToken.symbol || "").replace(/^\$+/, ""), mint = p.baseToken.address;
           return '<div class="rugrow">' + avatarHtml(c.img, sym, "sm") + '<div><b>' + escapeHtml(p.baseToken.name || sym) + '</b> <span class="sub">$' + escapeHtml(sym) + " · " + fmtUsd(num(p.marketCap) || num(p.fdv)) +
-            ' · <a href="https://fomo.family/tokens/solana/' + encodeURIComponent(mint) + '" target="_blank" rel="noopener">fomo</a></span><div class="sub">🚫 rug risk: ' + escapeHtml(c.rug.join(", ")) + "</div></div></div>";
+            ' · <a href="https://fomo.family/tokens/solana/' + encodeURIComponent(mint) + '" target="_blank" rel="noopener">fomo</a></span><div class="sub">rug risk: ' + escapeHtml(c.rug.join(", ")) + "</div></div></div>";
         }).join("") + "</details>";
       }
       function render(picks, scannedAt, opts) {
@@ -1074,11 +1070,11 @@
           const dex = p.url || ("https://dexscreener.com/solana/" + mint);
           const chips = [];
           if (pick.isNew) chips.push('<span class="tag new">NEW</span>');
-          if (x.wHits) chips.push('<span class="tag whale">🐋 tracked wallet bought' + (x.wHits > 1 ? " ×" + x.wHits : "") + "</span>");
+          if (x.wHits) chips.push('<span class="tag whale">tracked wallet bought' + (x.wHits > 1 ? " ×" + x.wHits : "") + "</span>");
           if (isBonding(p)) chips.push('<span class="tag bonding">BONDING</span>');
           if (age < 60 * 60 * 1000) chips.push('<span class="tag fresh">&lt;1H OLD</span>');
           if (hasNarrative(meta)) chips.push('<span class="tag narrative">NARRATIVE</span>');
-          (pick.warn || []).forEach(function (w) { chips.push('<span class="tag warn">⚠️ ' + escapeHtml(w) + "</span>"); });
+          (pick.warn || []).forEach(function (w) { chips.push('<span class="tag warn">' + escapeHtml(w) + "</span>"); });
           const sig = pick.sig || signalOf(pick.score, [], sess);
           const whyTxt = (pick.why || []).filter(function (w) { return w && !/^[+-]\d+ $/.test(w); }).slice(0, 5).join(" · ");
           const line = low ? narrativeText(p, meta) : truncate(meta.desc, 110);
@@ -1106,7 +1102,7 @@
                 '<div class="stat"><span class="k">Top 10</span><span class="v">' + (x.jTop10Pct != null ? Math.round(x.jTop10Pct) + "%" : "—") + "</span></div>" +
               "</div>" +
               '<div class="actions">' +
-                '<a class="fomo" href="' + fomo + '" target="_blank" rel="noopener">Open in fomo 🚀</a>' +
+                '<a class="fomo" href="' + fomo + '" target="_blank" rel="noopener">Open in fomo</a>' +
                 '<a class="dex" href="' + escapeHtml(dex) + '" target="_blank" rel="noopener">Chart</a>' +
                 '<button type="button" data-ca="' + escapeHtml(mint) + '">Copy CA</button>' +
               "</div>" +
@@ -1195,7 +1191,7 @@
             if (newCount) {
               FX.buzz([40, 50, 40]);
               const nb = picks.filter(function (pk) { return pk.isNew && pk.sig && pk.sig.label === "BUY"; });
-              if (nb.length) FX.pop("🔥 NEW BUY<small>$" + escapeHtml(String(nb[0].pair.baseToken.symbol || "").replace(/^\$+/, "")) + " · score " + nb[0].score + "</small>", "#b6ff3b");
+              if (nb.length) FX.pop("New BUY signal<small>$" + escapeHtml(String(nb[0].pair.baseToken.symbol || "").replace(/^\$+/, "")) + " · score " + nb[0].score + "</small>", "#b6ff3b");
             }
           }
 
@@ -1204,7 +1200,7 @@
           lastScanHadError = false;
           lastPickCount = picks.length;
           render(picks, stamp, { lowMc: useLow, rugs: rugAll });
-          if (!opts.auto && !useLow && picks.length) { const nb = picks.filter(function (pk) { return pk.sig && pk.sig.label === "BUY"; }).length; FX.pop("🎯 SNIPED<small>" + picks.length + " picks · " + nb + " BUY</small>", "#b6ff3b"); }
+          if (!opts.auto && !useLow && picks.length) { const nb = picks.filter(function (pk) { return pk.sig && pk.sig.label === "BUY"; }).length; FX.pop("Scan complete<small>" + picks.length + " picks · " + nb + " BUY</small>", "#b6ff3b"); }
           statusOverride = null;
           if (useLow) refreshStatus();
         } catch (err) {
@@ -1371,19 +1367,19 @@
       function renderIntel() {
         const box = document.getElementById("intel-body"), S = window.__snipe; if (!box || !S) return;
         const I = S.INTEL, s = S.sessNow(), tod = I.tod;
-        let h = '<div class="panel"><h2>🕐 Time of day</h2><p class="sub" style="margin-bottom:8px">Now: <b style="color:#fff">' + esc(s.name) + "</b> · " + (s.n ? s.winRate + "% hit rate, n=" + s.n : "no picks measured in this session yet") +
+        let h = '<div class="panel"><h2>Time of day</h2><p class="sub" style="margin-bottom:8px">Now: <b style="color:#fff">' + esc(s.name) + "</b> · " + (s.n ? s.winRate + "% hit rate, n=" + s.n : "no picks measured in this session yet") +
           " · " + (s.src === "measured" ? "using measured rate" : "using prior until n≥30") + " → size ×" + Math.max(0.6, Math.min(1.2, s.f)).toFixed(2) + (s.f < 0.85 ? ", needs conviction 4+" : "") + "</p>";
         if (tod && tod.sessions) {
-          h += '<table class="stats"><tr><th>Session (ET)</th><th>Done</th><th>Win</th><th>Rug</th></tr>' + S.SESSIONS.map((x) => { const m = tod.sessions[x.key] || {}; return "<tr><td>" + (x.key === s.key ? "👉 " : "") + esc(x.name) + ' <span class="sub">' + x.from + "–" + x.to + "h</span></td><td>" + (m.n || 0) + "</td><td><b>" + (m.winRate == null ? "—" : m.winRate + "%") + "</b></td><td>" + (m.rugRate == null ? "—" : m.rugRate + "%") + "</td></tr>"; }).join("") + "</table>";
+          h += '<table class="stats"><tr><th>Session (ET)</th><th>Done</th><th>Win</th><th>Rug</th></tr>' + S.SESSIONS.map((x) => { const m = tod.sessions[x.key] || {}; return "<tr><td>" + (x.key === s.key ? "" : "") + esc(x.name) + ' <span class="sub">' + x.from + "–" + x.to + "h</span></td><td>" + (m.n || 0) + "</td><td><b>" + (m.winRate == null ? "—" : m.winRate + "%") + "</b></td><td>" + (m.rugRate == null ? "—" : m.rugRate + "%") + "</td></tr>"; }).join("") + "</table>";
           const hrs = Object.entries(tod.hours || {});
           if (hrs.length) h += '<p class="sub" style="margin-top:8px">By hour: ' + hrs.map(([k, v]) => (+k % 12 || 12) + (+k < 12 ? "am" : "pm") + " " + v.winRate + "% (" + v.n + ")").join(" · ") + "</p>";
           h += '<p class="sub" style="margin-top:6px">Overall ' + (tod.overall ? tod.overall.winRate + "% of " + tod.overall.n : "—") + ". Data so far only covers Nov 14 from 1:39 PM ET, so most sessions have no picks yet; the prior fills in until each has 30 decided.</p>";
         } else h += '<div class="empty">Time-of-day stats load from 🫗\'s server…</div>';
         h += "</div>";
-        h += '<div class="panel"><h2>🐋 Tracked wallets</h2>';
+        h += '<div class="panel"><h2>Tracked wallets</h2>';
         if (I.updated) {
           h += '<div class="big">' + I.wallets.size + "<small>WALLETS · from " + I.winners + " winners in " + I.coins + " coins · updated " + tm(I.updated) + " ET</small></div>";
-          h += '<p class="sub">Wallets that bought our winning picks early (20 min before to 5 min after the flag) and made money, minus the ones that keep buying rugs. When they show up in a coin\'s latest trades it gets a 🐋 boost.</p>';
+          h += '<p class="sub">Wallets that bought our winning picks early (20 min before to 5 min after the flag) and made money, minus the ones that keep buying rugs. When they show up in a coin\'s latest trades it gets a boost.</p>';
           const top = Array.from(I.wallets.entries()).slice(0, 6);
           if (top.length) h += '<table class="stats" style="margin-top:8px"><tr><th>Wallet</th><th>Score</th><th>Wins</th><th>Bad</th></tr>' + top.map(([w, v]) => '<tr><td><a href="https://solscan.io/account/' + esc(w) + '" target="_blank" rel="noopener">' + esc(w.slice(0, 4) + "…" + w.slice(-4)) + "</a></td><td><b>" + v.score + "</b></td><td>" + v.wins + "</td><td>" + v.bad + "</td></tr>").join("") + "</table>";
           if (I.wallets.size < 30) h += '<p class="sub" style="margin-top:6px">Still thin: the list grows every 30 minutes as more picks finish.</p>';
@@ -1401,7 +1397,7 @@
           let h = '<div class="panel"><div class="big">' + (s.overall.winRate == null ? "—" : s.overall.winRate + "%") + "<small>WIN RATE · " + s.overall.decided + " decided of " + s.picks + " picks</small></div>";
           if (s.overall.decided < 100) h += '<p class="empty">Collecting data… ' + s.picks + " picks so far (" + s.pending + " still playing out). Numbers get reliable after a few hundred decided.</p>";
           h += '<p class="sub" style="text-align:center">' + esc(s.definition) + "<br>Updated " + tm(s.updated) + " ET</p></div>";
-          h += '<div class="panel"><h2>Overall</h2><table class="stats">' + thead + rowHtml(s.overall) + rowHtml(s.top8) + (s.versions || []).filter((v) => v.all.n).map((v) => rowHtml(v.top8)).join("") + "</table>" + (s.rugs ? '<p class="sub" style="margin-top:6px">🚫 Rugs (−80% within 2h, liquidity pulled, or vanished): ' + s.rugs.rugs + " of " + s.rugs.decided + " decided picks.</p>" : "") + "</div>";
+          h += '<div class="panel"><h2>Overall</h2><table class="stats">' + thead + rowHtml(s.overall) + rowHtml(s.top8) + (s.versions || []).filter((v) => v.all.n).map((v) => rowHtml(v.top8)).join("") + "</table>" + (s.rugs ? '<p class="sub" style="margin-top:6px">Rugs (−80% within 2h, liquidity pulled, or vanished): ' + s.rugs.rugs + " of " + s.rugs.decided + " decided picks.</p>" : "") + "</div>";
           for (const [m, label] of [["normal", "SNIPE mode"], ["lowmc", "LOW MC mode"]]) {
             const d = s.modes && s.modes[m]; if (!d) continue;
             h += '<div class="panel"><h2>' + label + '</h2><table class="stats">' + thead + rowHtml(d.all) + rowHtml(d.top8) + (d.scoreBands || []).map(rowHtml).join("") + "</table></div>";
@@ -1569,7 +1565,7 @@
         if (c.score >= 70) { pts += 2; why.push("v2 score " + c.score); } else if (c.score >= 60) { pts += 1.5; why.push("v2 score " + c.score); } else if (c.score >= 50) { pts += 0.5; why.push("v2 score " + c.score); }
         if (f.r5 >= 0.8 && f.r5 <= 1.6) { pts += 0.5; why.push("calm two-sided flow (" + f.r5.toFixed(1) + "x)"); }
         if (f.c1 != null && f.c1 > 0 && f.c1 <= 300) { pts += 0.5; why.push("still early (1h " + pctS(f.c1) + ")"); }
-        if (x && x.wHits > 0) { pts += 1.5; why.push("🐋 " + x.wHits + " tracked wallet" + (x.wHits > 1 ? "s" : "") + " bought"); }
+        if (x && x.wHits > 0) { pts += 1.5; why.push("" + x.wHits + " tracked wallet" + (x.wHits > 1 ? "s" : "") + " bought"); }
         if (fl && fl.smBuys > fl.smSells && fl.smBuys > 0) { pts += 1; why.push(fl.smBuys + " smart-money buys"); }
         if (fl && fl.topPnlBuys > 0) { pts += 0.5; why.push(fl.topPnlBuys + " top-PnL trader buys"); }
         if (fl && fl.whaleBuys > fl.whaleSells && fl.whaleBuys > 0) { pts += 0.5; why.push("whales buying"); }
@@ -1596,7 +1592,7 @@
         if (j && j.ptw && j.ptw.handle) n += "Linked X @" + j.ptw.handle + (j.ptw.followerCount ? " (" + j.ptw.followerCount.toLocaleString() + " followers)" : "") + ". ";
         n += L.length ? "Links: " + L.map((x) => x[0]).join(", ") + "." : "No socials.";
         lines.push(n);
-        if (x && x.wHits > 0) lines.push("🐋 Tracked wallet bought: " + x.wHits + " of our early-winner wallets bought in the latest trades" + (fl && fl.wList && fl.wList.length ? " (" + fl.wList.map((w) => w.slice(0, 4) + "…" + w.slice(-4)).join(", ") + ")" : "") + ".");
+        if (x && x.wHits > 0) lines.push("Tracked wallet bought: " + x.wHits + " of our early-winner wallets bought in the latest trades" + (fl && fl.wList && fl.wList.length ? " (" + fl.wList.map((w) => w.slice(0, 4) + "…" + w.slice(-4)).join(", ") + ")" : "") + ".");
         lines.push("Flow: " + mc(f.mcap) + " MC, " + (c.bonding ? "still on bonding curve" : "liq " + mc(f.liq)) + ", age " + Math.round(f.age / 60000) + "m. 5m " + f.b5 + " buys / " + f.s5 + " sells, vol 5m " + mc(f.v5) + " / 1h " + mc(f.v1) + ", price 5m " + pctS(f.c5) + " / 1h " + pctS(f.c1) + "." +
           (fl ? " Last " + fl.n + " trades: smart money " + fl.smBuys + "/" + fl.smSells + ", whales " + fl.whaleBuys + "/" + fl.whaleSells + ", top-PnL buys " + fl.topPnlBuys + "." : ""));
         if (j) lines.push("Rug check passed: " + [j.holders != null && j.holders + " holders", j.top10 != null && "top10 " + Math.round(j.top10) + "%", j.sniper != null && "snipers " + Math.round(j.sniper) + "%", j.insider != null && "insiders " + Math.round(j.insider) + "%",
@@ -1605,7 +1601,7 @@
         else lines.push("Rug check: Jupiter stats unavailable for this coin, so sizing small.");
         lines.push("Score v2 " + c.score + ": " + (c.why || []).filter((w) => w && !/^[+-]\d+ $/.test(w)).slice(0, 6).join(", ") + ".");
         lines.push("Why: " + (cv.why.length ? cv.why.join(", ") : "decent setup") + "." + (cv.minus.length ? " Risks: " + cv.minus.join(", ") + "." : ""));
-        if (sess) lines.push("🕐 Time: " + sess.name + (sess.n ? " (measured " + sess.winRate + "% hit rate, n=" + sess.n + (sess.src === "prior" ? ", still using the prior until n≥30" : "") + ")" : " (no data yet, using prior)") + " → size ×" + sz.toFixed(2) + ".");
+        if (sess) lines.push("Time: " + sess.name + (sess.n ? " (measured " + sess.winRate + "% hit rate, n=" + sess.n + (sess.src === "prior" ? ", still using the prior until n≥30" : "") + ")" : " (no data yet, using prior)") + " → size ×" + sz.toFixed(2) + ".");
         lines.push("Plan: conviction " + cv.conv + "/5 → " + usd(cost) + ". Stop -30%, take profit +100%, trail after +50%, out by 90m. Rug exit if liquidity drops >30% in a tick, dev sells, or sells spike.");
         return lines.join("\n");
       }
@@ -1647,9 +1643,9 @@
             p.miss = 0; p.lastPrice = x.price; p.lastMcap = x.mcap || p.lastMcap; p.lastAt = now;
             if (x.liq != null && x.liq > 0) p.lastLiq = x.liq;
             if (!p.img && x.img) p.img = x.img;
-            if (active && !p.bonding && prevLiq > 0 && x.liq != null && x.liq < prevLiq * 0.7) { closePos(p, x.price, "🚨 rug exit: liquidity -" + Math.round((1 - x.liq / prevLiq) * 100) + "% in one tick", now); return; }
-            if (active && prevPx > 0 && x.price < prevPx * 0.65) { closePos(p, x.price, "🚨 rug exit: crashed " + Math.round((1 - x.price / prevPx) * 100) + "% in one tick", now); return; }
-            if (active && x.s5 >= 20 && x.s5 > 2.5 * Math.max(1, x.b5) && x.price / p.entryPx - 1 < 0.2) { closePos(p, x.price, "🚨 rug exit: sell spike (5m " + x.b5 + " buys / " + x.s5 + " sells)", now); return; }
+            if (active && !p.bonding && prevLiq > 0 && x.liq != null && x.liq < prevLiq * 0.7) { closePos(p, x.price, "rug exit: liquidity -" + Math.round((1 - x.liq / prevLiq) * 100) + "% in one tick", now); return; }
+            if (active && prevPx > 0 && x.price < prevPx * 0.65) { closePos(p, x.price, "rug exit: crashed " + Math.round((1 - x.price / prevPx) * 100) + "% in one tick", now); return; }
+            if (active && x.s5 >= 20 && x.s5 > 2.5 * Math.max(1, x.b5) && x.price / p.entryPx - 1 < 0.2) { closePos(p, x.price, "rug exit: sell spike (5m " + x.b5 + " buys / " + x.s5 + " sells)", now); return; }
           }
           else { p.miss = (p.miss || 0) + 1; if (p.miss >= RULES.rugMisses) { closePos(p, 0, "rug: price vanished", now); return; } }
           if (x && x.liq != null && !p.bonding && x.liq < 150) { closePos(p, 0, "rug: liquidity pulled", now); return; }
@@ -1670,8 +1666,8 @@
           try {
             const fl = await jupFlow(p.mint, p.devAddr);
             if (!st.open.includes(p)) continue;
-            if (fl.devSells > 0) closePos(p, p.lastPrice, "🚨 rug exit: dev wallet sold", Date.now());
-            else if (fl.taggedSells >= 15 && fl.n >= 25) closePos(p, p.lastPrice, "🚨 rug exit: snipers/insiders dumping (" + fl.taggedSells + " tagged sells)", Date.now());
+            if (fl.devSells > 0) closePos(p, p.lastPrice, "rug exit: dev wallet sold", Date.now());
+            else if (fl.taggedSells >= 15 && fl.n >= 25) closePos(p, p.lastPrice, "rug exit: snipers/insiders dumping (" + fl.taggedSells + " tagged sells)", Date.now());
           } catch (e) {}
         }
       }
@@ -1699,7 +1695,7 @@
         let shownRug = 0;
         const pool = [];
         for (const c of fresh) {
-          if (c.rugPre && c.rugPre.length) { if (shownRug < 3 && c.score >= 50) { shownRug++; skip(c, flowOf(c.pair), "🚫 rug risk: " + c.rugPre.join(", ") + ".", true); } continue; }
+          if (c.rugPre && c.rugPre.length) { if (shownRug < 3 && c.score >= 50) { shownRug++; skip(c, flowOf(c.pair), "rug risk: " + c.rugPre.join(", ") + ".", true); } continue; }
           pool.push(c); if (pool.length >= 12) break;
         }
         if (!pool.length) { feed("Scan #" + st.scans + ": checked " + checked + " coins · " + cands.length + " passed filters, nothing new to look at"); return; }
@@ -1712,7 +1708,7 @@
           c.img = img;
           const x = S.flatOf(c.pair, c.meta, toJ(j));
           const rug = S.rugRisk(x);
-          if (rug.length) { skip(c, f, "🚫 rug risk: " + rug.join(", ") + ".", true, img); continue; }
+          if (rug.length) { skip(c, f, "rug risk: " + rug.join(", ") + ".", true, img); continue; }
           const g = flowGate(f);
           if (g) { skip(c, f, "Flow: " + g + ".", false, img); continue; }
           if (!(+c.pair.priceUsd > 0)) { skip(c, f, "No reliable price.", false, img); continue; }
@@ -1742,9 +1738,9 @@
             devAddr: (j && j.devAddr) || "", wHits: x.wHits || 0, score: c.score, sess: sess.key,
             mode: c.mode, thesis: thesisText(c, f, j, fl, cv, cost, x, sess, sz), links: links(c, j), fomo: "https://fomo.family/tokens/solana/" + m, dex: c.pair.url || "https://dexscreener.com/solana/" + m });
           opened++;
-          feed("🎯 BOUGHT $" + sym + " · " + usd(cost) + " at " + mc(f.mcap) + " MC · conviction " + cv.conv + "/5" + (x.wHits ? " · 🐋 tracked wallet bought" : ""), "buy", c.img);
+          feed("BOUGHT $" + sym + " · " + usd(cost) + " at " + mc(f.mcap) + " MC · conviction " + cv.conv + "/5" + (x.wHits ? " · tracked wallet bought" : ""), "buy", c.img);
         }
-        feed("Scan #" + st.scans + ": checked " + checked + " coins · " + cands.length + " passed filters · looked at " + (opened + passed) + " · opened " + opened + " · passed " + passed + (rugs ? " (" + rugs + " 🚫 rug risk)" : ""));
+        feed("Scan #" + st.scans + ": checked " + checked + " coins · " + cands.length + " passed filters · looked at " + (opened + passed) + " · opened " + opened + " · passed " + passed + (rugs ? " (" + rugs + " rug risk)" : ""));
       }
       function checkEnd(now) {
         const st = R.st, goalPnl = st.goal - st.budget;
@@ -1965,18 +1961,18 @@
         let t, c;
         if (ENGINE) { t = "Engine mode (server)"; c = "engine-line ok"; }
         else if (!b.checked) { t = "Checking 🫗's server…"; c = "engine-line"; }
-        else if (b.alive) { t = "🟢 🫗's server is online. Start a race and you can close the app; it keeps trading."; c = "engine-line ok"; }
-        else { t = "🟠 🫗's server isn't answering right now. A race started now runs inside this page, so keep it open."; c = "engine-line warn"; }
+        else if (b.alive) { t = "🫗's server is online. Start a race and you can close the app; it keeps trading."; c = "engine-line ok"; }
+        else { t = "🫗's server isn't answering right now. A race started now runs inside this page, so keep it open."; c = "engine-line warn"; }
         setText(a, t); setCls(a, c);
         if (!bl) return;
         let t2 = "", c2 = "engine-line";
         if (R.mode === "remote" && st) {
           const ago = b.hbSeenAt ? Math.round((Date.now() - b.hbSeenAt) / 1000) : null;
           if (st.status === "running") {
-            if (b.alive) { t2 = "🟢 Running on 🫗's server. You can close the app; it keeps trading." + (ago != null && ago > 20 ? " Last update " + ago + "s ago." : ""); c2 = "engine-line ok"; }
-            else { t2 = "🟠 Lost contact with 🫗's server" + (ago != null ? " (last update " + Math.round(ago / 60) + " min ago)" : "") + ". It picks back up on its own and shows any gap."; c2 = "engine-line warn"; }
+            if (b.alive) { t2 = "Running on 🫗's server. You can close the app; it keeps trading." + (ago != null && ago > 20 ? " Last update " + ago + "s ago." : ""); c2 = "engine-line ok"; }
+            else { t2 = "Lost contact with 🫗's server" + (ago != null ? " (last update " + Math.round(ago / 60) + " min ago)" : "") + ". It picks back up on its own and shows any gap."; c2 = "engine-line warn"; }
           }
-        } else if (R.mode === "local" && st && st.status === "running") { t2 = "🟠 This race runs inside this page (server was offline when it started). Keep the page open."; c2 = "engine-line warn"; }
+        } else if (R.mode === "local" && st && st.status === "running") { t2 = "This race runs inside this page (server was offline when it started). Keep the page open."; c2 = "engine-line warn"; }
         setText(bl, t2); setCls(bl, c2); bl.hidden = !t2;
         const f = $("rb-foot");
         if (f) setText(f, "Paper trades with 4% slippage + 1% fee each way." + (st && st.engine === "box" ? " 🫗 trades on its server whether or not this page is open." : " This race runs only while this page is open; if you close it, 🫗 pauses and shows the gap when you come back."));
@@ -2061,12 +2057,12 @@
           R.flashKeys = R.flashKeys || {};
           st.closed.forEach((c) => {
             const k = "c" + c.mint + c.exitTime; if (prev.closed.has(k)) return;
-            if (c.pnlPct >= 40 || c.fx === "tp") { FX.confetti(c.fx === "tp" ? 110 : 60); FX.flash("rgba(43,245,154,.35)"); FX.pop("💰 +" + Math.round(c.pnlPct) + "%<small>$" + esc(c.sym) + " · " + esc(c.exitReason) + "</small>", "#2bf59a"); FX.buzz([30, 40, 30, 40, 80]); R.flashKeys[k] = "flash-up"; }
-            else if (c.pnlUsd < 0) { FX.shake($("race-main")); FX.flash("rgba(255,77,109,.35)"); FX.pop((c.fx === "rug" ? "🚨 RUG EXIT" : "💥 STOPPED") + "<small>$" + esc(c.sym) + " " + pctS(c.pnlPct) + "</small>", "#ff4d6d"); FX.buzz([120]); R.flashKeys[k] = "flash-down"; }
-            else { FX.confetti(30); R.flashKeys[k] = "flash-up"; }
+            if (c.pnlPct >= 40 || c.fx === "tp") { FX.confetti(c.fx === "tp" ? 18 : 0); FX.flash("rgba(47,191,113,.35)"); FX.pop("Take profit +" + Math.round(c.pnlPct) + "%<small>$" + esc(c.sym) + " · " + esc(c.exitReason) + "</small>", "#2bf59a"); FX.buzz([30, 40, 30, 40, 80]); R.flashKeys[k] = "flash-up"; }
+            else if (c.pnlUsd < 0) { FX.shake($("race-main")); FX.flash("rgba(239,79,95,.3)"); FX.pop((c.fx === "rug" ? "Rug exit" : "Stopped out") + "<small>$" + esc(c.sym) + " " + pctS(c.pnlPct) + "</small>", "#ff4d6d"); FX.buzz([120]); R.flashKeys[k] = "flash-down"; }
+            else { R.flashKeys[k] = "flash-up"; }
           });
-          st.open.forEach((p) => { if (!prev.open.has(p.mint + p.entryTime)) { FX.pop("🎯 SNIPED<small>$" + esc(p.sym) + " · " + usd(p.cost) + "</small>", "#b6ff3b"); FX.buzz([40, 30, 40]); } });
-          if (prev.status === "running" && st.status === "ended") { if (st.winner === "bot") FX.confetti(140); else if (st.winner === "you") { FX.confetti(160); FX.pop("🏆 YOU WIN", "#3be8ff"); } }
+          st.open.forEach((p) => { if (!prev.open.has(p.mint + p.entryTime)) { FX.pop("Bought<small>$" + esc(p.sym) + " · " + usd(p.cost) + "</small>", "#b6ff3b"); FX.buzz([40, 30, 40]); } });
+          if (prev.status === "running" && st.status === "ended") { if (st.winner === "you") { FX.confetti(20); FX.pop("You win", "#ececf1"); } }
         }
         R.fxSeen = { id: st.id, closed: new Set(closedKeys), open: new Set(openKeys), status: st.status };
       }
@@ -2084,13 +2080,14 @@
         if (!running) $("race-setup").hidden = !R.setupOpen;
         // banner / timer
         const ban = $("rb-banner"); ban.hidden = running;
-        if (!running) setText(ban, (st.winner === "bot" ? "🫗 wins this one 🏆" : st.winner === "you" ? "🏎️ You win! 🏆" : "Tie 🤝") + " · " + st.endNote);
+        if (!running) setText(ban, (st.winner === "bot" ? "🫗 wins this one" : st.winner === "you" ? "You win" : "Tie") + " · " + st.endNote);
         $("rb-timer").hidden = !running; paintClock(); $("rb-track").classList.toggle("paused", !running);
         const be = botEquity(st), bp = be - st.budget, up = userPnl(st), goalPnl = st.goal - st.budget;
         const prog = (p) => Math.max(4, Math.min(95, goalPnl > 0 ? 4 + (Math.max(p, 0) / goalPnl) * 91 : 50));
         const rb = $("run-bot"), rm = $("run-me");
         const lb = prog(bp).toFixed(1) + "%", lm = prog(up).toFixed(1) + "%";
         if (rb.style.left !== lb) rb.style.left = lb; if (rm.style.left !== lm) rm.style.left = lm;
+        const fb = $("fill-bot"), fm = $("fill-me"); if (fb && fb.style.width !== lb) fb.style.width = lb; if (fm && fm.style.width !== lm) fm.style.width = lm;
         setText($("run-bot-lbl"), sgn(bp)); setText($("run-me-lbl"), st.user.balance == null ? "?" : sgn(up));
         const bpEl = $("sb-bot-pnl"); setText(bpEl, sgn(bp)); setCls(bpEl, cls(bp));
         setText($("sb-bot-sub"), usd(be) + " · " + pctS(bp / st.budget * 100) + " · cash " + usd(st.cash));
@@ -2102,7 +2099,7 @@
         ["y1", "y2"].forEach((a) => { $("sp-base").setAttribute(a, sp.base.toFixed(1)); $("sp-goal").setAttribute(a, sp.goal.toFixed(1)); });
         $("me-row").hidden = !running;
         $("r-stop").disabled = !!R.pending;
-        setText($("me-note"), st.user.wallet ? (st.user.walletErr || "Auto-tracking wallet " + st.user.wallet.slice(0, 4) + "…" + st.user.wallet.slice(-4) + " every 60s" + (st.user.walletStartPending ? " (reading starting value…)" : "") + ". You can still type a balance.") : "Started at " + usd(st.user.start) + ". Type what your fomo balance shows now and hit UPDATE.");
+        setText($("me-note"), st.user.wallet ? (st.user.walletErr || "Auto-tracking wallet " + st.user.wallet.slice(0, 4) + "…" + st.user.wallet.slice(-4) + " every 60s" + (st.user.walletStartPending ? " (reading starting value…)" : "") + ". You can still type a balance.") : "Started at " + usd(st.user.start) + ". Type what your fomo balance shows now and tap Update.");
         // feed + gap
         setStatus();
         const gapMin = st.gaps.reduce((a, g) => a + (g.to - g.from), 0) / 60000;
@@ -2115,7 +2112,7 @@
         setText($("rb-open-empty"), running ? "Hunting… none open yet" : "None");
         reconcile($("rb-open"), st.open, (p) => "o" + p.mint, (k) => tradeNode(k), (n, p) => {
           const val = exitVal(p.qty, p.lastPrice), pnl = val - p.cost, pct = (val / p.cost - 1) * 100, g = (p.lastPrice / p.entryPx - 1) * 100;
-          setText(n.querySelector(".t-sym"), "$" + p.sym + (p.wHits ? " 🐋" : ""));
+          setText(n.querySelector(".t-sym"), "$" + p.sym + (p.wHits ? "" : ""));
           setAv(n, p);
           const pe = n.querySelector(".pnl"); setText(pe, sgn(pnl) + " (" + pctS(pct) + ")"); setCls(pe, "pnl " + cls(pnl));
           setText(n.querySelector(".t-sub"), "In " + usd(p.cost) + " at " + mc(p.entryMcap) + " → now " + mc(p.lastMcap) + " (" + pctS(g) + " price) · " + Math.round((Date.now() - p.entryTime) / 60000) + "m · " + tm(p.entryTime) + " ET" + (p.miss ? " · price missing " + p.miss + "x" : ""));
@@ -2128,7 +2125,7 @@
         setText($("h-closed"), "🫗 Closed (" + st.closed.length + ")" + (st.closed.length ? " · " + st.closed.filter((c) => c.pnlUsd > 0).length + " wins" : ""));
         $("rb-closed-empty").hidden = !!st.closed.length;
         reconcile($("rb-closed"), st.closed.slice().reverse(), (p) => "c" + p.mint + p.exitTime, (k) => { const n = tradeNode(k); n.querySelector(".bar").remove(); return n; }, (n, p) => {
-          setText(n.querySelector(".t-sym"), (p.fx === "tp" ? "💰 " : /rug/.test(p.exitReason || "") ? "🚨 " : "") + "$" + p.sym);
+          setText(n.querySelector(".t-sym"), (p.fx === "tp" ? "" : /rug/.test(p.exitReason || "") ? "" : "") + "$" + p.sym);
           setAv(n, p);
           if (R.flashKeys && R.flashKeys[n.dataset.key]) { n.classList.add(R.flashKeys[n.dataset.key]); delete R.flashKeys[n.dataset.key]; }
           const pe = n.querySelector(".pnl"); setText(pe, sgn(p.pnlUsd) + " (" + pctS(p.pnlPct) + ")"); setCls(pe, "pnl " + cls(p.pnlUsd));
